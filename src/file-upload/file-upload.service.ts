@@ -4,42 +4,44 @@ import { Repository } from 'typeorm';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import {  UserEntity } from 'src/user/user.entity';
 import { File } from './entities/file.entity';
+import { UploadedFileEntity } from 'src/uploaded-file/uploaded-file.entity';
+import { FilePurpose } from 'src/uploaded-file/uploaded-file-purpose.enum';
 
 @Injectable()
 export class FileUploadService {
 
     constructor(
-        @InjectRepository(File)
-        private readonly fileRepository: Repository<File>,
+        @InjectRepository(UploadedFileEntity)
+        private readonly uploadedFileRepository: Repository<UploadedFileEntity>,
         private readonly cloudinaryService: CloudinaryService
     ){}
 
-    async uploadFile(file: Express.Multer.File, description: string | undefined, user: UserEntity): Promise<File>{
+    async uploadFile(file: Express.Multer.File, purpose: FilePurpose, user: UserEntity): Promise<UploadedFileEntity>{
         const cloudinaryReponse = await this.cloudinaryService.uploadFile(file);
 
-        const newlyCreatedFile = this.fileRepository.create({
+        const newlyCreatedFile = this.uploadedFileRepository.create({
             originalName: file.originalname,
             mimeType: file.mimetype,
             size: file.size,
+            purpose: purpose,
             publicId: cloudinaryReponse?.public_id,
-            url: cloudinaryReponse?.secure_url,
-            description,
-            uploader: user
+            fileUrl: cloudinaryReponse?.secure_url,
+            user: user
         });
 
-        return this.fileRepository.save(newlyCreatedFile)
+        return this.uploadedFileRepository.save(newlyCreatedFile)
         
     }
 
-    async findAll(): Promise<File[]>{
-        return this.fileRepository.find({
+    async findAll(): Promise<UploadedFileEntity[]>{
+        return this.uploadedFileRepository.find({
             relations:['uploader'],
-            order:{createdAt: 'DESC'}
+            order:{uploadedAt: 'DESC'}
         })
     }
-    async remove(id: string): Promise<void>{
-        const fileToBeDeleted = await this.fileRepository.findOne({
-            where: {id}
+    async remove(id: number): Promise<void>{
+        const fileToBeDeleted = await this.uploadedFileRepository.findOne({
+            where: { id }
         })
 
         if(!fileToBeDeleted){
@@ -50,6 +52,6 @@ export class FileUploadService {
         await this.cloudinaryService.deleteFile(fileToBeDeleted.publicId);
 
         //delete from db
-        await this.fileRepository.remove(fileToBeDeleted)
+        await this.uploadedFileRepository.remove(fileToBeDeleted)
     }
 }

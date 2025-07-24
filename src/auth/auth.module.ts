@@ -9,6 +9,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles-guard';
 import { EventsModule } from 'src/events/events.module';
+import { UserService } from 'src/user/user.service';
+import { UserActivationService } from 'src/user-activation/user-activation.service';
+import { RoleService } from 'src/role/role.service';
+import { FileUploadService } from 'src/file-upload/file-upload.service';
 
 @Module({
   imports:[
@@ -25,7 +29,7 @@ import { EventsModule } from 'src/events/events.module';
     JwtModule.register({})
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, RolesGuard], //jwt strategy, roles guard
+  providers: [AuthService, JwtStrategy, RolesGuard, UserService,UserActivationService,RoleService, FileUploadService,userAccountVerificationService], //jwt strategy, roles guard
   exports: [AuthService] //role -> guard
 })
 export class AuthModule {}

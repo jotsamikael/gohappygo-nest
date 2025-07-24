@@ -2,6 +2,9 @@ import { BaseEntity } from 'src/baseEntity/base.entity';
 import { DemandEntity } from 'src/demand/demand.entity';
 import { UserRoleEntity } from 'src/role/userRole.entity';
 import { TravelEntity } from 'src/travel/travel.entity';
+import { UploadedFileEntity } from 'src/uploaded-file/uploaded-file.entity';
+import { UserActivationEntity } from 'src/user-activation/user-activation.entity';
+import { UserVerificationAuditEntity } from 'src/user-verification-audit-entity/user-verification-audit.entity';
 import {
   Column,
   CreateDateColumn,
@@ -12,17 +15,16 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-
 export enum UserRole {
   USER = 'user',
   ADMIN = 'admin',
 }
 
 /*
-*jotsamikael
-*Represents a platform user (either sender or traveler). 
-*Stores identity, contact info, and role, and is linked to all activity such as announcements, travels, reviews, and transactions.
-*/
+ *jotsamikael
+ *Represents a platform user (either sender or traveler).
+ *Stores identity, contact info, and role, and is linked to all activity such as announcements, travels, reviews, and transactions.
+ */
 @Entity()
 export class UserEntity extends BaseEntity {
   @Column({ unique: true })
@@ -32,7 +34,10 @@ export class UserEntity extends BaseEntity {
   phone: string;
 
   @Column()
-  name: string;
+  firstName: string;
+
+  @Column()
+  lastName: string;
 
   @Column()
   username: string;
@@ -54,4 +59,24 @@ export class UserEntity extends BaseEntity {
 
   @OneToMany(() => TravelEntity, (t) => t.user)
   travels: TravelEntity[];
+
+  @Column({ default: false })
+  isPhoneVerified: boolean;
+
+  @Column({ default: false })
+  isVerified: boolean; // Full verification after selfie + ID
+
+  @OneToMany(() => UserActivationEntity, (activation) => activation.user)
+  activations: UserActivationEntity[];
+
+  @OneToMany(() => UploadedFileEntity, (file) => file.user)
+  files: UploadedFileEntity[];
+
+  // All logs related to the user being verified
+  @OneToMany(() => UserVerificationAuditEntity, (log) => log.reviewedUser)
+  verificationLogs: UserVerificationAuditEntity[];
+
+  // If this user is an admin, actions they’ve taken
+  @OneToMany(() => UserVerificationAuditEntity, (log) => log.verifiedBy)
+  verificationActions: UserVerificationAuditEntity[];
 }

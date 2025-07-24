@@ -35,11 +35,16 @@ import { TravelEntity } from './travel/travel.entity';
 import { TransactionEntity } from './transaction/transaction.entity';
 import { RequestStatusEntity } from './request-status/requestStatus.entity';
 import { RequestStatusHistoryEntity } from './request-status-history/RequestStatusHistory.entity';
-import { ReviewEntity } from './review/Review.entity';
 import {DeliveyProofEntity } from './delivery-proof/delivery-proof.entity';
 import { InsuranceEntity } from './insurance/insurance.entity';
 import { MessageEntity } from './message/message.entity';
 import { LegalProtectionEntity } from './legal-protection/legal-protection.entity';
+import { UserActivationModule } from './user-activation/user-activation.module';
+import { UploadedFileModule } from './uploaded-file/uploaded-file.module';
+import { UserActivationEntity } from './user-activation/user-activation.entity';
+import { UploadedFileEntity } from './uploaded-file/uploaded-file.entity';
+import { UserVerificationAuditEntityModule } from './user-verification-audit-entity/user-verification-audit.module';
+import { ReviewEntity } from './review/Review.entity';
 
 @Module({
   imports: [
@@ -73,7 +78,8 @@ import { LegalProtectionEntity } from './legal-protection/legal-protection.entit
         RequestStatusEntity, RequestStatusHistoryEntity,
         ReviewEntity, DeliveyProofEntity,
         InsuranceEntity, MessageEntity,
-        LegalProtectionEntity,
+        LegalProtectionEntity,UserActivationEntity,
+        UploadedFileEntity,
          File], //array of entities that you want to register
       synchronize: true, //dev mode
     }),
@@ -85,9 +91,9 @@ import { LegalProtectionEntity } from './legal-protection/legal-protection.entit
       }) */
      load:[appConfig]
     })
-    , UserModule, AuthModule, FileUploadModule, EventsModule, DemandModule, TravelModule, RequestModule, RoleModule, ReviewModule, TransactionModule, RequestStatusModule, RequestStatusHistoryModule, DeliveryProofModule, InsuranceModule, LegalProtectionModule, MessageModule],
+    , UserModule, AuthModule, FileUploadModule, EventsModule, DemandModule, TravelModule, RequestModule, RoleModule, ReviewModule, TransactionModule, RequestStatusModule, RequestStatusHistoryModule, DeliveryProofModule, InsuranceModule, LegalProtectionModule, MessageModule, UserActivationModule, UploadedFileModule, UserVerificationAuditEntityModule],
   controllers: [AppController, UserController],
-  providers: [AppService, UserService],
+  providers: [AppService, UserService, UserVerificationAuditEntityModule],
 })
 export class AppModule implements NestModule{
   configure(consumer: MiddlewareConsumer) {

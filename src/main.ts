@@ -10,6 +10,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger:['error', 'warn','log','debug','verbose']
   });
+  
   //validate incoming request bodies automatically
   app.useGlobalPipes(
     new ValidationPipe({

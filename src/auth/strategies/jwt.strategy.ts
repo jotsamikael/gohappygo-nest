@@ -9,7 +9,7 @@ export class JwtStrategy extends PassportStrategy(Strategy){
 
  constructor(private authService: AuthService){
      super({
-           jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+           jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), //vlidate jwt token and extract user info from it
            ignoreExpiration: false,
            secretOrKey: 'jwt_secret' 
         })
@@ -22,9 +22,9 @@ export class JwtStrategy extends PassportStrategy(Strategy){
             const user = await this.authService.getUserById(payload.sub)
             return {
                 id: user.id,
-                role: user.role,
+                role: user.role.code,
                 email: user.email,
-                name: user.name
+                name: user.firstName
 
             }
         } catch (error) {

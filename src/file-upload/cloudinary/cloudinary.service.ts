@@ -11,7 +11,7 @@ export class CloudinaryService{
     uploadFile(file: Express.Multer.File): Promise<UploadApiResponse>{
         return new Promise<UploadApiResponse>((resolve, reject)=>{
             const uploadStream = this.cloudinary.uploader.upload_stream({
-                folder: 'nestjs',
+                folder: 'gohappygo',
                 resource_type:'auto'
             }, 
         (error: UploadApiErrorResponse, result: UploadApiResponse)=>{
