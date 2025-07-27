@@ -1,10 +1,12 @@
 import { BaseEntity } from "src/baseEntity/base.entity";
 import { UserEntity } from "src/user/user.entity";
 import { Column, ManyToOne, JoinColumn, Entity } from "typeorm";
+
 /*@jotsamikael
 *Represents a rating and optional comment left by one user about another, in the context of a specific request.
 *Builds trust in the platform through feedback and reputation.
 */
+
 @Entity()
 export class ReviewEntity extends BaseEntity{
   @Column()

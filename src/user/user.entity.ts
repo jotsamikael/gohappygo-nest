@@ -7,12 +7,9 @@ import { UserActivationEntity } from 'src/user-activation/user-activation.entity
 import { UserVerificationAuditEntity } from 'src/user-verification-audit-entity/user-verification-audit.entity';
 import {
   Column,
-  CreateDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 
 export enum UserRole {

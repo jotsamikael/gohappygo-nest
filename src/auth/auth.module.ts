@@ -13,6 +13,12 @@ import { UserService } from 'src/user/user.service';
 import { UserActivationService } from 'src/user-activation/user-activation.service';
 import { RoleService } from 'src/role/role.service';
 import { FileUploadService } from 'src/file-upload/file-upload.service';
+import { UserVerificationAuditService } from 'src/user-verification-audit-entity/user-verification-audit.service';
+import { UserModule } from 'src/user/user.module';
+import { UserActivationModule } from 'src/user-activation/user-activation.module';
+import { RoleModule } from 'src/role/role.module';
+import { FileUploadModule } from 'src/file-upload/file-upload.module';
+import { UserVerificationAuditModule } from 'src/user-verification-audit-entity/user-verification-audit.module';
 
 @Module({
   imports:[
@@ -26,10 +32,15 @@ import { FileUploadService } from 'src/file-upload/file-upload.service';
     PassportModule,
 
     //configure jwt
-    JwtModule.register({})
+    JwtModule.register({}),
+    UserModule,
+    UserActivationModule,
+    RoleModule,
+    FileUploadModule,
+    UserVerificationAuditModule
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, RolesGuard, UserService,UserActivationService,RoleService, FileUploadService,userAccountVerificationService], //jwt strategy, roles guard
+  providers: [AuthService, JwtStrategy, RolesGuard], //jwt strategy, roles guard
   exports: [AuthService] //role -> guard
 })
 export class AuthModule {}

@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, ParseIntPipe, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Put, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -12,6 +12,8 @@ import { VerifyPhoneDto } from './dto/verifyPhone.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadFileDto } from 'src/file-upload/dto/upload-file.dto';
 import { VerifyUserAccountDto } from './dto/verifyUserAccount.dto';
+import { PaginatedResponse } from 'src/common/interfaces/paginated-reponse.interfaces';
+import { FindUserQueryDto } from './dto/FindUserQuery.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -30,7 +32,7 @@ export class AuthController {
 
     @Post('upload-verification')
     @UseInterceptors(FileInterceptor('file'))
-    async uploadFile(
+    async uploadFileForVerification(
       @UploadedFile() file: Express.Multer.File,
       @Body() uploadFileDto: UploadFileDto,
       @CurrentUser() user: UserEntity,
@@ -43,13 +45,17 @@ export class AuthController {
     }
 
     //Admin list unverified user accounts
-    @Get('')
-    async unVerifiedUserAccounts(){
-
+    @Get('/unverified')
+    @Roles(UserRole.ADMIN)//sets the required role to acces endpoint
+    @UseGuards(JwtAuthGuard, RolesGuard) //guards the endpoint
+    async unVerifiedUserAccounts(@Query() query :FindUserQueryDto): Promise<PaginatedResponse<Partial<UserEntity>>>{
+      return this.authService.getUnVerifiedUser(query);
     }
 
     //Admin verify user account
     @Patch('verify/:id')
+    @Roles(UserRole.ADMIN)//sets the required role to acces endpoint
+    @UseGuards(JwtAuthGuard, RolesGuard) //guards the endpoint
     async verifyUserAccount(@Param('id', ParseIntPipe) idUser: number, @CurrentUser() admin: UserEntity,@Body() verifyUserAccountDto: VerifyUserAccountDto){
      return this.authService.verifyUserAccount(idUser, verifyUserAccountDto, admin)
     }
@@ -67,12 +73,5 @@ export class AuthController {
     return this.authService.refreshToken(refreshToken);
   }
 
-  //Protected route
-
-  //1. Current user route
-  @UseGuards(JwtAuthGuard) //user must be loggedin
-  @Get('profile')
-  getProfile(@CurrentUser() user: any) {
-    return user;
-  }
+  
 }

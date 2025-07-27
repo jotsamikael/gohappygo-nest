@@ -20,7 +20,7 @@ export class RoleController {
 
     @Post('')
     @HttpCode(HttpStatus.CREATED)
-    async createPost(@Body() createUserRoleDto:CreateUserRoleDto, @CurrentUser() user: any ): Promise<UserRoleEntity>{    
+    async createUserRole(@Body() createUserRoleDto:CreateUserRoleDto, @CurrentUser() user: any ): Promise<UserRoleEntity>{    
     return this.roleService.createUserRole(createUserRoleDto, user);
     }
 
@@ -32,7 +32,7 @@ export class RoleController {
     }
 
     @Put(':id')
-    async updatePost(@Param('id', ParseIntPipe) id: number, @Body() updateUserRoleDto:UpdateUserRoleDto, @CurrentUser() user: any ){
+    async updateRole(@Param('id', ParseIntPipe) id: number, @Body() updateUserRoleDto:UpdateUserRoleDto, @CurrentUser() user: any ){
         return this.roleService.updateUserRole(id, updateUserRoleDto, user)
     }
 
@@ -40,7 +40,7 @@ export class RoleController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
-    async remove(@Param('id', ParseIntPipe) id: number):Promise<void>{
+    async removeRole(@Param('id', ParseIntPipe) id: number):Promise<void>{
         this.roleService.deleteRole(id)
     }
 }

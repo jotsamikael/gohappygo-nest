@@ -21,7 +21,7 @@ export class UserEventsService {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        name: user.firstName,
       },
       timeStamp: new Date(),
     };

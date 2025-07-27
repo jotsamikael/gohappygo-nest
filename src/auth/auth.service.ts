@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -22,10 +23,14 @@ import { UploadFileDto } from 'src/file-upload/dto/upload-file.dto';
 import { FileUploadService } from 'src/file-upload/file-upload.service';
 import { VerifyUserAccountDto } from './dto/verifyUserAccount.dto';
 import { UserVerificationAuditService } from 'src/user-verification-audit-entity/user-verification-audit.service';
+import { PaginatedResponse } from '../common/interfaces/paginated-reponse.interfaces';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { FindUserQueryDto } from './dto/FindUserQuery.dto';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class AuthService {
-   
+  private userListCacheKeys: Set<string> = new Set();
 
   constructor(
     @InjectRepository(UserEntity)
@@ -36,7 +41,8 @@ export class AuthService {
     private userService: UserService,
     private fileUploadService: FileUploadService,
     private userActivationService: UserActivationService,
-    private userAccountVerificationService: UserVerificationAuditService
+    private userAccountVerificationService: UserVerificationAuditService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
     //bcrypt.hash('123456789',10).then(console.log) //this function allows you to generate the password for a user
   }
@@ -120,21 +126,24 @@ export class AuthService {
     };
   }
 
-  async verifyPhoneNumber(verifyPhoneDto: VerifyPhoneDto){
+  async verifyPhoneNumber(verifyPhoneDto: VerifyPhoneDto) {
     //Get user account
-    const user = await this.userService.getUserByPhone(verifyPhoneDto.phoneNumber)
-    
-  // Get the latest valid activation code
-  const latestActivation = await this.userActivationService.getLatestValidActivationCode(user!);
-   
-  //if there's no activation code throw exception
-  if (!latestActivation) {
-    throw new BadRequestException('No valid activation code found');
-  }
+    const user = await this.userService.getUserByPhone(
+      verifyPhoneDto.phoneNumber,
+    );
+
+    // Get the latest valid activation code
+    const latestActivation =
+      await this.userActivationService.getLatestValidActivationCode(user!);
+
+    //if there's no activation code throw exception
+    if (!latestActivation) {
+      throw new BadRequestException('No valid activation code found');
+    }
     //if different throw exception
-  if (latestActivation.code !== verifyPhoneDto.activationCode) {
-    throw new BadRequestException('The activation code submitted is invalid');
-  }
+    if (latestActivation.code !== verifyPhoneDto.activationCode) {
+      throw new BadRequestException('The activation code submitted is invalid');
+    }
     //if same, update user account to phone verified
     await this.userService.setToUserPhoneVerified(user!);
 
@@ -142,40 +151,105 @@ export class AuthService {
     await this.userActivationService.setValidatedDate(latestActivation);
 
     return {
-    message: 'Phone number verified successfully',
-  };
-
+      message: 'Phone number verified successfully',
+    };
   }
 
+  async uploadVerificationDocuments(
+    file,
+    uploadFileDto: UploadFileDto,
+    user: UserEntity,
+  ): Promise<any> {
+    return this.fileUploadService.uploadFile(file, uploadFileDto.purpose, user);
+  }
 
- async uploadVerificationDocuments(file,uploadFileDto: UploadFileDto, user: UserEntity): Promise<any> {
-  return  this.fileUploadService.uploadFile(
-        file,
-        uploadFileDto.purpose,
-        user,
+  private generateUserListCacheKey(query: FindUserQueryDto): string {
+    const { page = 1, limit = 10, email } = query;
+    return `user_list_page${page}_limit${limit}_email${email || 'all'}`;
+  }
+
+  async getUnVerifiedUser(
+    query: FindUserQueryDto,
+  ): Promise<PaginatedResponse<Partial<UserEntity>>> {
+    //generate cache key
+    const cacheKey = this.generateUserListCacheKey(query);
+    //add cache key to memory
+    this.userListCacheKeys.add(cacheKey);
+
+    //get data from cache
+    const getCachedData =
+      await this.cacheManager.get<PaginatedResponse<UserEntity>>(cacheKey);
+    if (getCachedData) {
+      console.log(
+        `Cache Hit---------> Returning users list from Cache ${cacheKey}`,
       );
-  }
- 
+      return getCachedData;
+    }
+    console.log(`Cache Miss---------> Returning users list from database`);
+    const { page = 1, limit = 10, email } = query;
+    const skip = (page - 1) * limit;
 
-async verifyUserAccount(idUser: number, verifyUserAccountDto: VerifyUserAccountDto, admin:UserEntity) {
-      //get user account by id or throw exception
-        const user = await this.usersRepository.findOne({
+    //get only unverified users whose role is USER
+    const queryBuilder = this.usersRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.role', 'role') // join to access role.code
+      .where('user.isVerified = :isVerified', { isVerified: false })
+      .andWhere('role.code = :roleCode', { roleCode: 'USER' })
+      .orderBy('user.created_at', 'DESC')
+      .skip(skip)
+      .take(limit);
+
+    if (email) {
+      queryBuilder.andWhere('user.email ILIKE :email', { email: `%${email}%` });
+    }
+
+    const [rawItems, totalItems] = await queryBuilder.getManyAndCount();
+    // Remove password from each user
+    const items = rawItems.map(({ password, ...rest }) => rest);
+
+    const totalPages = Math.ceil(totalItems / limit);
+
+    const responseResult = {
+      items,
+      meta: {
+        currentPage: page,
+        itemsPerPage: limit,
+        totalItems,
+        totalPages,
+        hasPreviousPage: page > 1,
+        hasNextPage: page < totalPages,
+      },
+    };
+    await this.cacheManager.set(cacheKey, responseResult, 30000);
+    return responseResult;
+  }
+
+  async verifyUserAccount(
+    idUser: number,
+    verifyUserAccountDto: VerifyUserAccountDto,
+    admin: UserEntity,
+  ) {
+    //get user account by id or throw exception
+    const user = await this.usersRepository.findOne({
       where: { id: idUser },
     });
     if (!user) {
-      throw new NotFoundException(
-        `User with id ${idUser} not found`,
-      );
+      throw new NotFoundException(`User with id ${idUser} not found`);
     }
-      //update user account based on verifyUserAccountDto (rejected/approved)
-      user.isVerified = verifyUserAccountDto.approved
-      
-      await this.userService.save(user)
+    //update user account based on verifyUserAccountDto (rejected/approved)
+    user.isVerified = verifyUserAccountDto.approved;
 
-      //send email with reject reason if any
+    await this.userService.save(user);
 
-      //record account verification
-      await this.userAccountVerificationService.record(verifyUserAccountDto.approved, verifyUserAccountDto.reason, user,admin);
+    //send email with reject reason if any
+
+    //record account verification
+    await this.userAccountVerificationService.record(
+      verifyUserAccountDto.approved,
+      verifyUserAccountDto.reason,
+      user,
+      admin,
+    );
   }
 
   async login(loginDto: LoginDto) {

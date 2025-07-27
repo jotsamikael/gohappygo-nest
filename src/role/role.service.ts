@@ -24,7 +24,7 @@ export class RoleService implements OnModuleInit {
     @InjectRepository(UserRoleEntity)
     private userRoleRespository: Repository<UserRoleEntity>,
      //Inject cache manager
-        @Inject(CACHE_MANAGER) private cacheManager: Cache
+     @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
   async onModuleInit() {
