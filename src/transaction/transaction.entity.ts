@@ -9,7 +9,7 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from "typeorm";
 */
 @Entity()
 export class TransactionEntity extends BaseEntity{
-    @Column()
+  @Column()
   payerId: number;
 
   @Column()

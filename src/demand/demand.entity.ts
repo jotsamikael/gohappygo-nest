@@ -1,11 +1,11 @@
+import { AirportEntity } from "src/airport/entities/airport.entity";
 import { BaseEntity } from "src/baseEntity/base.entity";
 import { RequestEntity } from "src/request/request.entity";
 import { UserEntity } from "src/user/user.entity";
-import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from "typeorm";
 /*
 *jotsamikael
 *Represents a delivery request posted by a sender (HappyExpéditeur) with origin, destination, weight, and desired delivery date. 
-*Used in the ClassicGo service.
 */
 @Entity()
 export class DemandEntity extends BaseEntity{
@@ -19,11 +19,16 @@ export class DemandEntity extends BaseEntity{
   @Column()
   description: string;
 
-  @Column()
-  origin: string;
+  
+  @Column({nullable:true})
+  flightNumber: string;
 
-  @Column()
-  destination: string;
+ // Add the foreign key columns
+ @Column()
+ originAirportId: number;
+
+ @Column()
+ destinationAirportId: number;
 
   @Column()
   deliveryDate: Date;
@@ -34,12 +39,20 @@ export class DemandEntity extends BaseEntity{
   @Column('decimal', { precision: 10, scale: 2 })
   pricePerKg: number;
 
-  @Column({ type: 'enum', enum: ['active', 'expired', 'cancelled'] })
+  @Column({ type: 'enum', enum: ['active', 'expired', 'cancelled','resolved'] })
   status: string;
 
-    @ManyToOne(()=> UserEntity, (u)=> u.demands)
+ @ManyToOne(() => AirportEntity, { nullable: false })
+ @JoinColumn({ name: 'originAirportId' })
+ originAirport: AirportEntity;
+
+ @ManyToOne(() => AirportEntity, { nullable: false })
+ @JoinColumn({ name: 'destinationAirportId' })
+ destinationAirport: AirportEntity;
+
+  @ManyToOne(()=> UserEntity, (u)=> u.demands)
     user: UserEntity
 
-    @OneToMany(()=> RequestEntity, (r)=>r.demand)
+  @OneToMany(()=> RequestEntity, (r)=>r.demand)
     requests: RequestEntity[]
 }

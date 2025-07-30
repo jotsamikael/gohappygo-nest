@@ -1,5 +1,7 @@
 import { BaseEntity } from 'src/baseEntity/base.entity';
 import { DemandEntity } from 'src/demand/demand.entity';
+import { MessageEntity } from 'src/message/message.entity';
+import { RequestEntity } from 'src/request/request.entity';
 import { UserRoleEntity } from 'src/role/userRole.entity';
 import { TravelEntity } from 'src/travel/travel.entity';
 import { UploadedFileEntity } from 'src/uploaded-file/uploaded-file.entity';
@@ -63,6 +65,13 @@ export class UserEntity extends BaseEntity {
   @Column({ default: false })
   isVerified: boolean; // Full verification after selfie + ID
 
+   @OneToMany(() => MessageEntity, (messages) => messages.sender)
+   messagesSend: MessageEntity[];
+
+   @OneToMany(() => MessageEntity, (messages) => messages.receiver)
+   messagesReceived: MessageEntity[];
+
+
   @OneToMany(() => UserActivationEntity, (activation) => activation.user)
   activations: UserActivationEntity[];
 
@@ -76,4 +85,9 @@ export class UserEntity extends BaseEntity {
   // If this user is an admin, actions they’ve taken
   @OneToMany(() => UserVerificationAuditEntity, (log) => log.verifiedBy)
   verificationActions: UserVerificationAuditEntity[];
+
+   @OneToMany(() => RequestEntity, (request) => request.requester)
+  requests: RequestEntity[];
+
+
 }

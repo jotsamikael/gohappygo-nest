@@ -1,6 +1,7 @@
 import { BaseEntity } from "src/baseEntity/base.entity";
 import { RequestEntity } from "src/request/request.entity";
-import { Entity, ManyToOne } from "typeorm";
+import { UserEntity } from "src/user/user.entity";
+import { Column, Entity, ManyToOne } from "typeorm";
 
 
 /*jotsamikael
@@ -9,6 +10,19 @@ import { Entity, ManyToOne } from "typeorm";
 */
 @Entity()
 export class MessageEntity extends BaseEntity{
+      
+
+    @Column()
+    content: string;
+
+    @Column({ default: false })
+    isRead: boolean;
+
+    @ManyToOne(()=>UserEntity, (r)=>r.messagesSend)
+    sender: UserEntity;
+
+    @ManyToOne(()=>UserEntity, (r)=>r.messagesReceived)
+    receiver: UserEntity;
 
 
     @ManyToOne(()=>RequestEntity, (r)=>r.messages)

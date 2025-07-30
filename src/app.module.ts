@@ -46,6 +46,7 @@ import { UploadedFileEntity } from './uploaded-file/uploaded-file.entity';
 import { UserVerificationAuditModule } from './user-verification-audit-entity/user-verification-audit.module';
 import { ReviewEntity } from './review/review.entity';
 import { UserVerificationAuditEntity } from './user-verification-audit-entity/user-verification-audit.entity';
+import { AirportModule } from './airport/airport.module';
 
 @Module({
   imports: [
@@ -92,7 +93,7 @@ import { UserVerificationAuditEntity } from './user-verification-audit-entity/us
       }) */
      load:[appConfig]
     })
-    , UserModule, AuthModule,UserVerificationAuditModule, FileUploadModule, EventsModule, DemandModule, TravelModule, RequestModule, RoleModule, ReviewModule, TransactionModule, RequestStatusModule, RequestStatusHistoryModule, DeliveryProofModule, InsuranceModule, LegalProtectionModule, MessageModule, UserActivationModule, UploadedFileModule, UserVerificationAuditModule],
+    , UserModule, AuthModule,UserVerificationAuditModule, FileUploadModule, EventsModule, DemandModule, TravelModule, RequestModule, RoleModule, ReviewModule, TransactionModule, RequestStatusModule, RequestStatusHistoryModule, DeliveryProofModule, InsuranceModule, LegalProtectionModule, MessageModule, UserActivationModule, UploadedFileModule, UserVerificationAuditModule, AirportModule],
   controllers: [AppController, UserController],
   providers: [AppService],
 })

@@ -1,28 +1,39 @@
-import { BaseEntity } from "src/baseEntity/base.entity";
-import { DeliveyProofEntity } from "src/delivery-proof/delivery-proof.entity";
-import { DemandEntity } from "src/demand/demand.entity";
-import { InsuranceEntity } from "src/insurance/insurance.entity";
-import { LegalProtectionEntity } from "src/legal-protection/legal-protection.entity";
-import { MessageEntity } from "src/message/message.entity";
-import { RequestStatusHistoryEntity } from "src/request-status-history/RequestStatusHistory.entity";
-import { TransactionEntity } from "src/transaction/transaction.entity";
-import { TravelEntity } from "src/travel/travel.entity";
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from "typeorm";
+import { BaseEntity } from 'src/baseEntity/base.entity';
+import { DeliveyProofEntity } from 'src/delivery-proof/delivery-proof.entity';
+import { DemandEntity } from 'src/demand/demand.entity';
+import { InsuranceEntity } from 'src/insurance/insurance.entity';
+import { LegalProtectionEntity } from 'src/legal-protection/legal-protection.entity';
+import { MessageEntity } from 'src/message/message.entity';
+import { RequestStatusHistoryEntity } from 'src/request-status-history/RequestStatusHistory.entity';
+import { RequestStatusEntity } from 'src/request-status/requestStatus.entity';
+import { TransactionEntity } from 'src/transaction/transaction.entity';
+import { TravelEntity } from 'src/travel/travel.entity';
+import { UserEntity } from 'src/user/user.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 
 /*
-*jotsamikael
-*Represents a match between a sender and a traveler. 
-*This is the core transaction unit that binds an announcement and a travel. It includes proposed price, package info, and triggers insurance and legal protection services.
-*/
+ *jotsamikael
+ *Represents a match between a sender and a traveler.
+ *This is the core transaction unit that binds an announcement and a travel. It includes proposed price, package info, and triggers insurance and legal protection services.
+ */
 
 @Entity()
-export class RequestEntity extends BaseEntity{
+export class RequestEntity extends BaseEntity {
+  @Column({ nullable: true }) // Make nullable
+  demandId: number | null;
 
-@Column()
-  demandId: number;
+  @Column({ nullable: true }) // Make nullable
+  travelId: number | null;
 
-  @Column()
-  travelId: number;
+  @Column({ nullable: true })
+  requesterId: number; // Add this property too
 
   @Column({ type: 'enum', enum: ['GoAndGive', 'GoAndGo'] })
   requestType: 'GoAndGive' | 'GoAndGo';
@@ -30,37 +41,47 @@ export class RequestEntity extends BaseEntity{
   @Column('decimal', { precision: 10, scale: 2 })
   offerPrice: number;
 
-  @Column('text')
-  packageDescription: string;
+  @Column('text',{ nullable: true })
+  packageDescription?: string|null;
 
-  @Column('decimal', { precision: 10, scale: 2 })
-  weight: number;
+  @Column('decimal', { precision: 10, scale: 2,nullable: true })
+  weight: number|null;
 
+  // Add current status property
+  @Column({ nullable: true })
+  currentStatusId: number;
 
-    @OneToMany(()=>RequestStatusHistoryEntity, (r)=>r.requestStatuses)
-    requestStatusHistory: RequestStatusHistoryEntity;
+  @ManyToOne(() => RequestStatusEntity)
+  @JoinColumn({ name: 'currentStatusId' })
+  currentStatus: RequestStatusEntity;
 
+  @OneToMany(() => RequestStatusHistoryEntity, (r) => r.requestStatus)
+  requestStatusHistory: RequestStatusHistoryEntity[];
 
-   @OneToOne(()=> InsuranceEntity, (r)=>r.request)
-    insurance: InsuranceEntity;
+  @OneToOne(() => InsuranceEntity, (r) => r.request)
+  insurance: InsuranceEntity;
 
-    @OneToOne(()=> LegalProtectionEntity, (l)=>l.request)
-    legalProtections: LegalProtectionEntity;
+  @OneToOne(() => LegalProtectionEntity, (l) => l.request)
+  legalProtections: LegalProtectionEntity;
 
-    @OneToOne(()=> DeliveyProofEntity, (d)=>d.request)
-    deliveryProof: DeliveyProofEntity;
+  @OneToOne(() => DeliveyProofEntity, (d) => d.request)
+  deliveryProof: DeliveyProofEntity;
 
-    @OneToMany(()=> TransactionEntity, (t)=>t.request)
-    transactions: TransactionEntity[];
+  @OneToMany(() => TransactionEntity, (t) => t.request)
+  transactions: TransactionEntity[];
 
-    @OneToMany(()=> MessageEntity, (m)=>m.request)
-    messages: MessageEntity[];
+  @OneToMany(() => MessageEntity, (m) => m.request)
+  messages: MessageEntity[];
 
-    @ManyToOne(()=>DemandEntity, (d)=>d.requests)
-    @JoinColumn({name:'demandId'})
-    demand: DemandEntity
+  @ManyToOne(() => DemandEntity, (d) => d.requests)
+  @JoinColumn({ name: 'demandId' })
+  demand: DemandEntity;
 
-    @ManyToOne(()=>TravelEntity, (d)=>d.requests)
-    @JoinColumn({name:'travelId'})
-    travel: TravelEntity
+  @ManyToOne(() => TravelEntity, (d) => d.requests)
+  @JoinColumn({ name: 'travelId' })
+  travel: TravelEntity;
+
+  @ManyToOne(() => UserEntity, (d) => d.requests)
+  @JoinColumn({ name: 'requesterId' })
+  requester: UserEntity;
 }

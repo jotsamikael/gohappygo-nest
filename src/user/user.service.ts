@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './user.entity';
-import { Repository, UpdateResult } from 'typeorm';
+import { FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
 import { CreateUserDto } from './dto/createUser.dto';
 import { RoleService } from 'src/role/role.service';
 import * as bcrypt from 'bcrypt';
@@ -11,6 +11,7 @@ import { UpdatePhoneDto } from './dto/UpdatePhone.dto';
 
 @Injectable()
 export class UserService {
+   
  
    
 
@@ -255,10 +256,6 @@ async updatePhoneNumber(user: UserEntity, updatePhoneDto: UpdatePhoneDto) {
 
 
 
-
-
-
-
  async save(user: UserEntity) {
     await this.userRepository.save(user);
   }
@@ -273,4 +270,13 @@ async updatePhoneNumber(user: UserEntity, updatePhoneDto: UpdatePhoneDto) {
   private async hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, 10);
   }
+
+
+  async findOne(arg: FindOptionsWhere<UserEntity>): Promise<UserEntity | null> {
+    return await this.userRepository.findOne({
+      where:arg,
+      relations: ['role', 'demands', 'travels', 'activations', 'files', 'verificationLogs', 'verificationActions'],
+    });
+}
+
 }

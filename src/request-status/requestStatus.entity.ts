@@ -11,20 +11,14 @@ import { Column, Entity, OneToMany } from "typeorm";
 @Entity()
 export class RequestStatusEntity extends BaseEntity{
   @Column()
-  requestId: number;
-
-  @Column()
-  statusId: number;
-
-  @Column()
-  changedBy: number;
-
-  @Column()
-  changedDate: Date;
+  label:string;
+  
+  @Column({unique:true})
+  status: string;
 
   @Column({ nullable: true })
   comment: string;
 
-    @OneToMany(()=>RequestStatusHistoryEntity, (r)=>r.requestStatuses)
+  @OneToMany(()=>RequestStatusHistoryEntity, (r)=>r.requestStatus)
     requestStatusHistory: RequestStatusHistoryEntity;
 }
