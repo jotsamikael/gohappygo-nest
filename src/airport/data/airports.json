@@ -422,11 +422,7 @@
       "airportname": "Tunis–Carthage International Airport",
       "iata_code": "TUN",
       "state": ""
-    }
-  ]
-
-****************************
-[
+    },
     {
       "region": "Western Africa",
       "country": "Benin",
@@ -706,10 +702,7 @@
       "airportname": "Lomé–Tokoin International Airport",
       "iata_code": "LFW",
       "state": ""
-    }
-  ]
-****************************
-[
+    },
     {
       "region": "Central Africa",
       "country": "Angola",
@@ -837,10 +830,7 @@
       "airportname": "Agostinho-Neto International Airport",
       "iata_code": "PNR",
       "state": ""
-    }
-  ]
-****************************
-[
+    },
     {
       "region": "Southern Africa",
       "country": "Botswana",
@@ -1016,10 +1006,7 @@
       "airportname": "Seychelles International Airport",
       "iata_code": "SEZ",
       "state": ""
-    }
-  ]
-***************************
-[
+    },
     {
       "region": "Eastern Africa",
       "country": "Burundi",
@@ -1171,10 +1158,7 @@
       "airportname": "Roland Garros Airport",
       "iata_code": "RUN",
       "state": ""
-    }
-  ]
-***************************
-[
+    },
     {
       "region": "Caribbean",
       "country": "Antigua and Barbuda",
@@ -1374,10 +1358,7 @@
       "airportname": "Martinique Aimé Césaire International Airport",
       "iata_code": "FDF",
       "state": ""
-    }
-  ]
-***************************
-[
+    },
     {
       "region": "Central America",
       "country": "Belize",
@@ -1497,11 +1478,7 @@
       "airportname": "Changuinola 'Capitán Manuel Niño' International Airport",
       "iata_code": "CHX",
       "state": "Bocas del Toro"
-    }
-  ]
-***************************
-[
-    // CANADA
+    },  
     {
       "region": "North America",
       "country": "Canada",
@@ -1542,8 +1519,6 @@
       "iata_code": "YHZ",
       "state": "Nova Scotia"
     },
-  
-    // UNITED STATES
     {
       "region": "North America",
       "country": "United States",
@@ -1585,7 +1560,6 @@
       "state": "Texas"
     },
   
-    // MEXICO
     {
       "region": "North America",
       "country": "Mexico",
@@ -1625,11 +1599,8 @@
       "airportname": "General Abelardo L. Rodríguez International Airport",
       "iata_code": "TIJ",
       "state": "Baja California"
-    }
-  ]
-****************************
-[
-    // Argentina
+    },
+    
     {
       "region": "South America",
       "country": "Argentina",
@@ -1655,7 +1626,7 @@
       "state": "Córdoba Province"
     },
   
-    // Bolivia
+    
     {
       "region": "South America",
       "country": "Bolivia",
@@ -1673,7 +1644,7 @@
       "state": "Santa Cruz Department"
     },
   
-    // Brazil
+    
     {
       "region": "South America",
       "country": "Brazil",
@@ -1699,7 +1670,7 @@
       "state": "Federal District"
     },
   
-    // Chile
+    
     {
       "region": "South America",
       "country": "Chile",
@@ -1709,7 +1680,7 @@
       "state": "Santiago Metropolitan Region"
     },
   
-    // Colombia
+   
     {
       "region": "South America",
       "country": "Colombia",
@@ -1727,7 +1698,7 @@
       "state": "Antioquia"
     },
   
-    // Ecuador
+   
     {
       "region": "South America",
       "country": "Ecuador",
@@ -1745,7 +1716,7 @@
       "state": "Guayas"
     },
   
-    // Falkland Islands (UK)
+    
     {
       "region": "South America",
       "country": "Falkland Islands",
@@ -1755,7 +1726,7 @@
       "state": ""
     },
   
-    // French Guiana (France)
+   
     {
       "region": "South America",
       "country": "French Guiana",
@@ -1765,7 +1736,7 @@
       "state": ""
     },
   
-    // Guyana
+   
     {
       "region": "South America",
       "country": "Guyana",
@@ -1775,7 +1746,7 @@
       "state": "Demerara-Mahaica"
     },
   
-    // Paraguay
+    
     {
       "region": "South America",
       "country": "Paraguay",
@@ -1785,7 +1756,7 @@
       "state": "Central Department"
     },
   
-    // Peru
+    
     {
       "region": "South America",
       "country": "Peru",
@@ -1803,7 +1774,7 @@
       "state": "Cusco Region"
     },
   
-    // Suriname
+  
     {
       "region": "South America",
       "country": "Suriname",
@@ -1813,7 +1784,7 @@
       "state": "Para District"
     },
   
-    // Uruguay
+    
     {
       "region": "South America",
       "country": "Uruguay",
@@ -1823,7 +1794,7 @@
       "state": "Canelones Department"
     },
   
-    // Venezuela
+    
     {
       "region": "South America",
       "country": "Venezuela",
@@ -1839,11 +1810,8 @@
       "airportname": "La Chinita International Airport",
       "iata_code": "MAR",
       "state": "Zulia"
-    }
-  ]
-***************************
-[
-    // Kazakhstan
+    },
+    
     {
       "region": "Central Asia",
       "country": "Kazakhstan",
@@ -1869,7 +1837,7 @@
       "state": "Turkistan Region"
     },
   
-    // Kyrgyzstan
+   
     {
       "region": "Central Asia",
       "country": "Kyrgyzstan",
@@ -1887,7 +1855,7 @@
       "state": "Osh Region"
     },
   
-    // Tajikistan
+   
     {
       "region": "Central Asia",
       "country": "Tajikistan",
@@ -1905,7 +1873,7 @@
       "state": "Sughd Region"
     },
   
-    // Turkmenistan
+   
     {
       "region": "Central Asia",
       "country": "Turkmenistan",
@@ -1923,7 +1891,7 @@
       "state": "Lebap Province"
     },
   
-    // Uzbekistan
+  
     {
       "region": "Central Asia",
       "country": "Uzbekistan",
@@ -1949,7 +1917,7 @@
       "state": "Bukhara Region"
     },
   
-    // Afghanistan (sometimes included in Central Asia)
+   
     {
       "region": "Central Asia",
       "country": "Afghanistan",
@@ -1965,13 +1933,8 @@
       "airportname": "Kandahar International Airport",
       "iata_code": "KDH",
       "state": "Kandahar Province"
-    }
-  ]
-
-*****************************
-
-[
-    // CHINA (MAINLAND)
+    },
+ 
     {
       "region": "Eastern Asia",
       "country": "China",
@@ -2005,7 +1968,7 @@
       "state": "Sichuan"
     },
   
-    // HONG KONG (CHINA)
+    
     {
       "region": "Eastern Asia",
       "country": "Hong Kong (China)",
@@ -2015,7 +1978,7 @@
       "state": ""
     },
   
-    // MACAU (CHINA)
+   
     {
       "region": "Eastern Asia",
       "country": "Macau (China)",
@@ -2025,7 +1988,7 @@
       "state": ""
     },
   
-    // TAIWAN (CHINA)
+
     {
       "region": "Eastern Asia",
       "country": "Taiwan (China)",
@@ -2035,7 +1998,7 @@
       "state": "Taiwan"
     },
   
-    // JAPAN
+   
     {
       "region": "Eastern Asia",
       "country": "Japan",
@@ -2053,7 +2016,7 @@
       "state": "Osaka"
     },
   
-    // SOUTH KOREA
+    
     {
       "region": "Eastern Asia",
       "country": "South Korea",
@@ -2071,7 +2034,7 @@
       "state": "Busan"
     },
   
-    // NORTH KOREA
+  
     {
       "region": "Eastern Asia",
       "country": "North Korea",
@@ -2081,7 +2044,7 @@
       "state": ""
     },
   
-    // MONGOLIA
+   
     {
       "region": "Eastern Asia",
       "country": "Mongolia",
@@ -2089,11 +2052,8 @@
       "airportname": "Chinggis Khaan International Airport",
       "iata_code": "ULN",
       "state": ""
-    }
-  ]
-********************************
-[
-    // Afghanistan
+    },
+  
     {
       "region": "Southern Asia",
       "country": "Afghanistan",
@@ -2111,7 +2071,7 @@
       "state": "Kandahar Province"
     },
   
-    // Bangladesh
+   
     {
       "region": "Southern Asia",
       "country": "Bangladesh",
@@ -2129,7 +2089,7 @@
       "state": "Chittagong Division"
     },
   
-    // Bhutan
+    
     {
       "region": "Southern Asia",
       "country": "Bhutan",
@@ -2139,7 +2099,7 @@
       "state": "Paro District"
     },
   
-    // India
+  
     {
       "region": "Southern Asia",
       "country": "India",
@@ -2165,7 +2125,7 @@
       "state": "Karnataka"
     },
   
-    // Maldives
+   
     {
       "region": "Southern Asia",
       "country": "Maldives",
@@ -2175,7 +2135,7 @@
       "state": "Kaafu Atoll"
     },
   
-    // Nepal
+  
     {
       "region": "Southern Asia",
       "country": "Nepal",
@@ -2185,7 +2145,7 @@
       "state": "Bagmati Province"
     },
   
-    // Pakistan
+   
     {
       "region": "Southern Asia",
       "country": "Pakistan",
@@ -2203,7 +2163,7 @@
       "state": "Sindh"
     },
   
-    // Sri Lanka
+  
     {
       "region": "Southern Asia",
       "country": "Sri Lanka",
@@ -2211,11 +2171,8 @@
       "airportname": "Bandaranaike International Airport",
       "iata_code": "CMB",
       "state": "Western Province"
-    }
-  ]
-************************************
-[
-    // Brunei
+    },
+   
     {
       "region": "Southeast Asia",
       "country": "Brunei",
@@ -2225,7 +2182,7 @@
       "state": ""
     },
   
-    // Cambodia
+   
     {
       "region": "Southeast Asia",
       "country": "Cambodia",
@@ -2243,7 +2200,7 @@
       "state": ""
     },
   
-    // Indonesia
+   
     {
       "region": "Southeast Asia",
       "country": "Indonesia",
@@ -2261,7 +2218,7 @@
       "state": "Bali"
     },
   
-    // Laos
+ 
     {
       "region": "Southeast Asia",
       "country": "Laos",
@@ -2279,7 +2236,7 @@
       "state": ""
     },
   
-    // Malaysia
+   
     {
       "region": "Southeast Asia",
       "country": "Malaysia",
@@ -2297,7 +2254,7 @@
       "state": "Penang"
     },
   
-    // Myanmar
+   
     {
       "region": "Southeast Asia",
       "country": "Myanmar",
@@ -2315,7 +2272,7 @@
       "state": "Mandalay Region"
     },
   
-    // Philippines
+    
     {
       "region": "Southeast Asia",
       "country": "Philippines",
@@ -2333,7 +2290,7 @@
       "state": "Cebu"
     },
   
-    // Singapore
+    
     {
       "region": "Southeast Asia",
       "country": "Singapore",
@@ -2343,7 +2300,7 @@
       "state": ""
     },
   
-    // Thailand
+   
     {
       "region": "Southeast Asia",
       "country": "Thailand",
@@ -2361,7 +2318,7 @@
       "state": "Phuket"
     },
   
-    // Timor-Leste
+   
     {
       "region": "Southeast Asia",
       "country": "Timor-Leste",
@@ -2371,7 +2328,7 @@
       "state": ""
     },
   
-    // Vietnam
+   
     {
       "region": "Southeast Asia",
       "country": "Vietnam",
@@ -2387,11 +2344,8 @@
       "airportname": "Tan Son Nhat International Airport",
       "iata_code": "SGN",
       "state": ""
-    }
-  ]
-***********************************
-[
-    // Arabian Peninsula
+    },
+    
     {
       "region": "Southwest Asia/Middle East",
       "country": "Bahrain",
@@ -2465,7 +2419,6 @@
       "state": ""
     },
   
-    // Levant Region
     {
       "region": "Southwest Asia/Middle East",
       "country": "Cyprus",
@@ -2523,7 +2476,6 @@
       "state": ""
     },
   
-    // Other Middle East
     {
       "region": "Southwest Asia/Middle East",
       "country": "Iran",
@@ -2555,11 +2507,7 @@
       "airportname": "Esenboğa International Airport",
       "iata_code": "ESB",
       "state": ""
-    }
-  ]
-*************************************
-[
-  // ITALY
+    },
   {
     "region": "Southern Europe",
     "country": "Italy",
@@ -2597,7 +2545,6 @@
     "notes": "Gateway to the Adriatic with new water taxi docks"
   },
 
-  // SPAIN
   {
     "region": "Southern Europe",
     "country": "Spain",
@@ -2635,7 +2582,6 @@
     "notes": "Europe's 3rd busiest holiday airport (seasonal peaks)"
   },
 
-  // PORTUGAL
   {
     "region": "Southern Europe",
     "country": "Portugal",
@@ -2661,7 +2607,6 @@
     "notes": "Ryanair's Portuguese base with wine-themed lounges"
   },
 
-  // GREECE
   {
     "region": "Southern Europe",
     "country": "Greece",
@@ -2687,7 +2632,6 @@
     "notes": "Europe's busiest seasonal airport (April-October)"
   },
 
-  // CYPRUS
   {
     "region": "Southern Europe",
     "country": "Cyprus",
@@ -2701,7 +2645,6 @@
     "notes": "New terminal opened 2022 with 11M passenger capacity"
   },
 
-  // MALTA
   {
     "region": "Southern Europe",
     "country": "Malta",
@@ -2715,7 +2658,6 @@
     "notes": "Only EU airport operating 24/7 with new ATC tower"
   },
 
-  // REGIONAL HUBS
   {
     "region": "Southern Europe",
     "country": "Italy",
@@ -2739,11 +2681,7 @@
     "runways": 2,
     "passengers_2023": "22.3 million",
     "notes": "Andalusia's main airport with new Terminal 3"
-  }
-]
-*************************************
-[
-  // UNITED ARAB EMIRATES (Expanded)
+  },
   {
     "region": "Southwest Asia/Middle East",
     "country": "United Arab Emirates",
@@ -2829,7 +2767,6 @@
     "notes": "Primarily military with some charter flights"
   },
 
-  // YEMEN (Detailed Conflict Status)
   {
     "region": "Southwest Asia/Middle East",
     "country": "Yemen",
@@ -2913,11 +2850,8 @@
     "runways": 1,
     "passengers_2023": "N/A",
     "notes": "Border area with Oman, limited civilian use"
-  }
-]
-*****************************************************
-[
-  // ENGLAND
+  },
+
   {
     "region": "United Kingdom",
     "country": "United Kingdom",
@@ -2991,7 +2925,7 @@
     "notes": "Primary Midlands hub with US pre-clearance"
   },
 
-  // SCOTLAND
+  
   {
     "region": "United Kingdom",
     "country": "United Kingdom",
@@ -3017,7 +2951,7 @@
     "notes": "Transatlantic services to North America"
   },
 
-  // WALES
+  
   {
     "region": "United Kingdom",
     "country": "United Kingdom",
@@ -3031,7 +2965,7 @@
     "notes": "Wales' only international airport"
   },
 
-  // NORTHERN IRELAND
+ 
   {
     "region": "United Kingdom",
     "country": "United Kingdom",
@@ -3057,7 +2991,6 @@
     "notes": "Convenient city-center location"
   },
 
-  // CROWN DEPENDENCIES (Not part of UK but included for completeness)
   {
     "region": "British Isles",
     "country": "Jersey",
@@ -3093,11 +3026,7 @@
     "runways": 1,
     "passengers_2023": "0.7 million",
     "notes": "Important regional connector"
-  }
-]
-************************************************
-[
-  // AUSTRIA
+  },
   {
     "region": "Western Europe",
     "country": "Austria",
@@ -3111,7 +3040,7 @@
     "notes": "Austrian Airlines hub with extensive Eastern European connections"
   },
 
-  // BELGIUM
+  
   {
     "region": "Western Europe",
     "country": "Belgium",
@@ -3125,7 +3054,7 @@
     "notes": "Primary hub for Brussels Airlines and EU institution flights"
   },
 
-  // FRANCE
+  
   {
     "region": "Western Europe",
     "country": "France",
@@ -3151,7 +3080,6 @@
     "notes": "Main domestic and European leisure destination hub"
   },
 
-  // GERMANY
   {
     "region": "Western Europe",
     "country": "Germany",
@@ -3177,7 +3105,6 @@
     "notes": "Lufthansa's secondary hub with premium passenger facilities"
   },
 
-  // IRELAND
   {
     "region": "Western Europe",
     "country": "Ireland",
@@ -3191,7 +3118,6 @@
     "notes": "Main transatlantic gateway with US pre-clearance"
   },
 
-  // LUXEMBOURG
   {
     "region": "Western Europe",
     "country": "Luxembourg",
@@ -3205,7 +3131,6 @@
     "notes": "Cargolux hub with strong freight operations"
   },
 
-  // NETHERLANDS
   {
     "region": "Western Europe",
     "country": "Netherlands",
@@ -3219,7 +3144,6 @@
     "notes": "KLM hub with Europe's best-connected flight network"
   },
 
-  // SWITZERLAND
   {
     "region": "Western Europe",
     "country": "Switzerland",
@@ -3245,7 +3169,6 @@
     "notes": "Important for UN and international organizations"
   },
 
-  // BENELUX SMALLER AIRPORTS
   {
     "region": "Western Europe",
     "country": "Belgium",
@@ -3271,7 +3194,6 @@
     "notes": "Military-civilian airport with many leisure routes"
   },
 
-  // GERMAN REGIONAL HUBS
   {
     "region": "Western Europe",
     "country": "Germany",
@@ -3295,11 +3217,7 @@
     "runways": 2,
     "passengers_2023": "22.9 million",
     "notes": "Replaced Tegel and Schönefeld airports in 2020"
-  }
-]
-***************************************************************
-[
-  // POLAND
+  },
   {
     "region": "Central Europe",
     "country": "Poland",
@@ -3325,7 +3243,6 @@
     "notes": "Primary gateway to southern Poland and the Tatra Mountains"
   },
 
-  // CZECH REPUBLIC
   {
     "region": "Central Europe",
     "country": "Czech Republic",
@@ -3339,7 +3256,6 @@
     "notes": "Smartwings hub with excellent public transport connections"
   },
 
-  // HUNGARY
   {
     "region": "Central Europe",
     "country": "Hungary",
@@ -3353,7 +3269,6 @@
     "notes": "Wizz Air's largest base with new SkyCourt terminal"
   },
 
-  // SLOVAKIA
   {
     "region": "Central Europe",
     "country": "Slovakia",
@@ -3367,7 +3282,6 @@
     "notes": "Serves both Bratislava and Vienna (60km away)"
   },
 
-  // SLOVENIA
   {
     "region": "Central Europe",
     "country": "Slovenia",
@@ -3381,7 +3295,6 @@
     "notes": "Adria Airways' former hub, now served by various carriers"
   },
 
-  // CROATIA
   {
     "region": "Central Europe",
     "country": "Croatia",
@@ -3407,7 +3320,6 @@
     "notes": "Seasonal Mediterranean destination with summer traffic peaks"
   },
 
-  // ROMANIA
   {
     "region": "Central Europe",
     "country": "Romania",
@@ -3421,7 +3333,7 @@
     "notes": "TAROM's hub with new boarding bridges and business lounge"
   },
 
-  // BULGARIA
+
   {
     "region": "Central Europe",
     "country": "Bulgaria",
@@ -3435,7 +3347,6 @@
     "notes": "Undergoing terminal expansion for Schengen accession"
   },
 
-  // SERBIA
   {
     "region": "Central Europe",
     "country": "Serbia",
@@ -3449,7 +3360,7 @@
     "notes": "Air Serbia hub with new C concourse opened in 2023"
   },
 
-  // REGIONAL HUBS
+ 
   {
     "region": "Central Europe",
     "country": "Poland",
@@ -3473,11 +3384,8 @@
     "runways": 1,
     "passengers_2023": "0.4 million",
     "notes": "Eastern Hungary's gateway with Wizz Air base"
-  }
-]
-******************************************************
-[
-  // RUSSIA (European part)
+  },
+ 
   {
     "region": "Eastern Europe",
     "country": "Russia",
@@ -3505,7 +3413,7 @@
     "restrictions": "EU airspace sanctions in effect"
   },
 
-  // BELARUS
+  
   {
     "region": "Eastern Europe",
     "country": "Belarus",
@@ -3520,7 +3428,6 @@
     "restrictions": "EU airspace sanctions in effect"
   },
 
-  // UKRAINE (operational status as of 2024)
   {
     "region": "Eastern Europe",
     "country": "Ukraine",
@@ -3535,7 +3442,6 @@
     "restrictions": "Closed to commercial traffic"
   },
 
-  // MOLDOVA
   {
     "region": "Eastern Europe",
     "country": "Moldova",
@@ -3549,7 +3455,6 @@
     "notes": "Wizz Air expansion with new European routes"
   },
 
-  // BALTICS
   {
     "region": "Eastern Europe",
     "country": "Estonia",
@@ -3587,7 +3492,6 @@
     "notes": "New cargo terminal opened 2023"
   },
 
-  // CAUCASUS (Transcontinental)
   {
     "region": "Eastern Europe",
     "country": "Georgia",
@@ -3625,7 +3529,6 @@
     "notes": "AZAL hub with space-age terminal design"
   },
 
-  // REGIONAL HUBS
   {
     "region": "Eastern Europe",
     "country": "Russia",
@@ -3651,11 +3554,7 @@
     "passengers_2023": "0.1 million",
     "notes": "Occasional charter flights to EU destinations",
     "restrictions": "No scheduled commercial service"
-  }
-]
-******************************************************************
-[
-  // DENMARK
+  },
   {
     "region": "Nordic",
     "country": "Denmark",
@@ -3683,7 +3582,6 @@
     "hub_for": ["Ryanair"]
   },
 
-  // FINLAND
   {
     "region": "Nordic",
     "country": "Finland",
@@ -3711,7 +3609,7 @@
     "seasonal": true
   },
 
-  // ICELAND
+
   {
     "region": "Nordic",
     "country": "Iceland",
@@ -3726,7 +3624,6 @@
     "hub_for": ["Icelandair", "PLAY"]
   },
 
-  // NORWAY
   {
     "region": "Nordic",
     "country": "Norway",
@@ -3753,7 +3650,7 @@
     "notes": "Gateway to fjord country with new domestic pier"
   },
 
-  // SWEDEN
+
   {
     "region": "Nordic",
     "country": "Sweden",
@@ -3780,7 +3677,7 @@
     "notes": "Western Sweden hub with new cargo facility"
   },
 
-  // AUTONOMOUS TERRITORIES
+
   {
     "region": "Nordic",
     "country": "Faroe Islands",
@@ -3819,7 +3716,7 @@
     "notes": "Essential lifeline for autonomous archipelago"
   },
 
-  // SPECIALTY AIRPORTS
+ 
   {
     "region": "Nordic",
     "country": "Norway",
@@ -3845,11 +3742,8 @@
     "runways": 1,
     "passengers_2023": "0.4 million",
     "notes": "Primary northern Iceland airport with international charter flights"
-  }
-]
-*******************************************************
-[
-  // SWEDEN
+  },
+
   {
     "region": "Nordic",
     "country": "Sweden",
@@ -3909,7 +3803,7 @@
     "longest_runway": "3,350 m"
   },
 
-  // LATVIA
+
   {
     "region": "Baltic",
     "country": "Latvia",
@@ -3941,7 +3835,7 @@
     "longest_runway": "2,000 m"
   },
 
-  // LITHUANIA
+  
   {
     "region": "Baltic",
     "country": "Lithuania",
@@ -3988,7 +3882,7 @@
     "seasonal": true
   },
 
-  // CROSS-BORDER AIRPORTS
+
   {
     "region": "Nordic/Baltic",
     "country": "Sweden/Latvia",
@@ -3999,10 +3893,8 @@
     "notes": "Proposed joint airport on Gotland Island (feasibility study ongoing)",
     "expected_completion": "2035"
   }
-]
-*****************************************************
-[
-  // AUSTRALIA
+,
+ 
   {
     "region": "Oceania",
     "country": "Australia",
@@ -4031,7 +3923,7 @@
     "hub_for": ["Qantas", "Jetstar"]
   },
 
-  // NEW ZEALAND
+
   {
     "region": "Oceania",
     "country": "New Zealand",
@@ -4058,7 +3950,7 @@
     "notes": "Primary gateway to Antarctica with specialized cold weather operations"
   },
 
-  // PACIFIC ISLANDS
+
   {
     "region": "Oceania",
     "country": "Fiji",
@@ -4085,7 +3977,7 @@
     "notes": "Only international airport in French Polynesia with overwater runway approach"
   },
 
-  // SMALL ISLAND STATES
+
   {
     "region": "Oceania",
     "country": "Samoa",
@@ -4111,7 +4003,7 @@
     "notes": "Air Niugini hub with challenging mountainous approaches"
   },
 
-  // TERRITORIES
+
   {
     "region": "Oceania",
     "country": "New Caledonia",
@@ -4137,7 +4029,7 @@
     "notes": "Strategic transpacific stopover with U.S. military shared use"
   },
 
-  // UNIQUE AIRPORTS
+
   {
     "region": "Oceania",
     "country": "Kiribati",
