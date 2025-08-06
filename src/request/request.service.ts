@@ -9,6 +9,7 @@ import { CreateRequestToTravelDto } from './dto/createRequestToTravel.dto';
 import { CreateRequestToDemandDto } from './dto/createRequestToDemand.dto';
 import { TravelService } from 'src/travel/travel.service';
 import { DemandService } from 'src/demand/demand.service';
+import { TransactionService } from 'src/transaction/transaction.service';
 
 @Injectable()
 export class RequestService {
@@ -19,6 +20,7 @@ export class RequestService {
     private requestStatusService: RequestStatusService,
     private travelService: TravelService,
     private demandService: DemandService,
+    private transactionService: TransactionService
   ) { }
 
 
@@ -96,7 +98,7 @@ async createRequestToDemand(createRequestDto: CreateRequestToDemandDto, user: Us
 
   // src/request/request.service.ts
 
-// Add this method to your RequestService class
+
 async acceptRequest(requestId: number, user: UserEntity): Promise<RequestEntity> {
   // 1. Find the request with all necessary relations
   const request = await this.requestRepository.findOne({
@@ -139,6 +141,35 @@ async acceptRequest(requestId: number, user: UserEntity): Promise<RequestEntity>
     // Request was addressed to a demand - update demand status
     await this.handleDemandRequestAcceptance(request);
   }
+
+  // 7. Create transaction automatically
+  await this.transactionService.createTransactionFromRequest(request);
+
+  return request;
+}
+  
+
+async completeRequest(requestId: number, user: UserEntity): Promise<RequestEntity> {
+  const request = await this.getRequestById(requestId);
+  if (!request) {
+    throw new NotFoundException('Request not found');
+  }
+  // 1. Check if the user is authorized to complete this request
+  const isAuthorized = request.requesterId === user.id;
+  if (!isAuthorized) {
+    throw new ForbiddenException('Only the requester can complete this request');
+  }
+
+  // 2. Update request status to completed
+  const completedStatus = await this.requestStatusService.getRequestByStatus('COMPLETED');
+  if (!completedStatus) {
+    throw new NotFoundException('Completed status not found');
+  }
+  request.currentStatusId = completedStatus.id;
+  await this.requestRepository.save(request);
+
+  // 3. Release funds from stripe to payee
+  await this.transactionService.releaseFundsFromStripe(request.id);
 
   return request;
 }
