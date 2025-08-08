@@ -47,6 +47,7 @@ import { UserVerificationAuditModule } from './user-verification-audit-entity/us
 import { ReviewEntity } from './review/review.entity';
 import { UserVerificationAuditEntity } from './user-verification-audit-entity/user-verification-audit.entity';
 import { AirportModule } from './airport/airport.module';
+import { AirportEntity } from './airport/entities/airport.entity';
 
 @Module({
   imports: [
@@ -74,7 +75,7 @@ import { AirportModule } from './airport/airport.module';
       username: 'root',
       password: '',
       database: 'gohappygo',
-      entities: [ UserEntity, UserRoleEntity, 
+      entities: [ UserEntity, UserRoleEntity, AirportEntity,
         DemandEntity, RequestEntity,
         TravelEntity, TransactionEntity,
         RequestStatusEntity, RequestStatusHistoryEntity,

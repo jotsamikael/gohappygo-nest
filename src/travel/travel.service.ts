@@ -86,15 +86,31 @@ export class TravelService {
     }
 
     async publishTravel(user:UserEntity, createTravelDto:CreateTravelDto):Promise<TravelEntity>{
+      //check if user account is verified
+      if(!user.isVerified){
+        throw new BadRequestException('Your account is not verified')
+      }
+      //check if the user has already published a travel with the same flight number
+      const existingTravel = await this.travelRepository.findOne({
+        where:{flightNumber:createTravelDto.flightNumber}
+      })
+      if(existingTravel){
+        throw new BadRequestException('You have already published a travel with the same flight number')
+      }
      const newDemand = await this.travelRepository.create({
         userId: user.id,
         title: createTravelDto.title,
         flightNumber:createTravelDto.flightNumber,
         airline:createTravelDto.airline,
-        departureAirportId:createTravelDto.departureAirportId,
+        departureAirportId: createTravelDto.departureAirportId,
         arrivalAirportId:createTravelDto.arrivalAirportId,
-        departureDatetime:createTravelDto.departureDatetime,
-        arrivalDatetime:createTravelDto.arrivalDatetime,
+        departureDatetime: new Date(createTravelDto.departureDatetime),
+        arrivalDatetime: new Date(createTravelDto.arrivalDatetime),
+        pricePerKg:createTravelDto.pricePerKg,
+        totalWeightAllowance:createTravelDto.totalWeightAllowance,  
+        weightAvailable:createTravelDto.totalWeightAllowance,
+        createdBy:user.id,
+        status:'active',
         user:user
      })
       return await this.travelRepository.save(newDemand);
@@ -109,7 +125,7 @@ export class TravelService {
     async getTravelByUser(id: number):Promise<TravelEntity[]>{
         const demands = await this.travelRepository.find({
             where:{userId: id},
-            relations:['user', 'request']
+            relations:['user', 'requests']
         })
         if(!demands){
          throw new NotAcceptableException(`User has no demands`)
@@ -154,7 +170,7 @@ async softDeleteTravel(id: number): Promise<TravelEntity> {
 
 
 //get travels by airport
-async getTravelsByAirport(airportId: number): Promise<TravelEntity[]> {
+async getTravelsByDepartureAirport(airportId: number): Promise<TravelEntity[]> {
   return this.travelRepository.find({
     where: { departureAirportId: airportId },
     relations: ['user']

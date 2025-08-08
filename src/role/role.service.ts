@@ -18,6 +18,7 @@ import { Cache } from 'cache-manager';
 
 @Injectable()
 export class RoleService implements OnModuleInit {
+  
       private roleListCacheKeys: Set<string> = new Set();
 
   constructor(
@@ -30,6 +31,15 @@ export class RoleService implements OnModuleInit {
   async onModuleInit() {
     await this.seedRoles();
   }
+
+  async getUserRoleById(roleId: number): Promise<UserRoleEntity> {
+    const UserRoleEntity = await this.userRoleRespository.findOneBy({ id:roleId });
+    if (!UserRoleEntity) {
+      throw new NotFoundException(`Role with id ${roleId} not found`);
+    }
+    return UserRoleEntity;
+  }
+
 
   private generateRoleListCacheKey(query: FindRolesQueryDto): string {
         const { page = 1, limit = 10, code } = query;

@@ -20,6 +20,7 @@ export class ReviewService {
         rating:reviewDto.rating,
         comment:reviewDto.comment,
         reviewer:user,
+        createdBy:user.id,
         reviewee: await this.userService.getUserById(reviewDto.revieweeId)
       })
 

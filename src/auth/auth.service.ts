@@ -27,6 +27,9 @@ import { PaginatedResponse } from '../common/interfaces/paginated-reponse.interf
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { FindUserQueryDto } from './dto/FindUserQuery.dto';
 import { Cache } from 'cache-manager';
+import { FilePurpose } from 'src/uploaded-file/uploaded-file-purpose.enum';
+import { UploadVerificationResponseDto, UploadedFileResponseDto } from './dto/auth-response.dto';
+import { UploadVerificationDto } from './dto/upload-verification.dto';
 
 @Injectable()
 export class AuthService {
@@ -94,6 +97,7 @@ export class AuthService {
       email: registerDto.email,
       firstName: registerDto.firstName,
       lastName: registerDto.lastName,
+      phone: registerDto.phoneNumber,
       password: hashedPassword,
       roleId: userRole?.id,
     });
@@ -155,13 +159,93 @@ export class AuthService {
     };
   }
 
-  async uploadVerificationDocuments(
+  /*async uploadVerificationDocuments(
     file,
     uploadFileDto: UploadFileDto,
     user: UserEntity,
   ): Promise<any> {
     return this.fileUploadService.uploadFile(file, uploadFileDto.purpose, user);
+  }*/
+
+    
+// Update the uploadVerificationDocuments method:
+// In src/auth/auth.service.ts
+
+async uploadVerificationDocuments(
+  files: Express.Multer.File[],
+  uploadVerificationDto: UploadVerificationDto, // Now only contains notes
+  user: UserEntity,
+): Promise<UploadVerificationResponseDto> {
+  // Validate number of files
+  if (!files || files.length !== 3) {
+    throw new BadRequestException('Exactly 3 files are required: selfie, ID front, and ID back');
   }
+
+  // Validate file types and sizes
+  const maxFileSize = 5 * 1024 * 1024; // 5MB
+  const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+
+  for (const file of files) {
+    // Check file size
+    if (file.size > maxFileSize) {
+      throw new BadRequestException(`File ${file.originalname} is too large. Maximum size is 5MB`);
+    }
+
+    // Check file type
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException(`File ${file.originalname} is not a valid image. Allowed types: JPEG, PNG, WebP`);
+    }
+  }
+
+  const [selfie, idFront, idBack] = files;
+  
+  try {
+    // Upload selfie
+    const selfieFile = await this.fileUploadService.uploadFile(
+      selfie, 
+      FilePurpose.SELFIE, 
+      user
+    );
+
+    // Upload ID front
+    const idFrontFile = await this.fileUploadService.uploadFile(
+      idFront, 
+      FilePurpose.ID_FRONT, 
+      user
+    );
+
+    // Upload ID back
+    const idBackFile = await this.fileUploadService.uploadFile(
+      idBack, 
+      FilePurpose.ID_BACK, 
+      user
+    );
+
+    const response: UploadVerificationResponseDto = {
+      message: 'Verification documents uploaded successfully',
+      files: [
+        this.mapToUploadedFileResponse(selfieFile),
+        this.mapToUploadedFileResponse(idFrontFile),
+        this.mapToUploadedFileResponse(idBackFile)
+      ]
+    };
+
+    return response;
+  } catch (error) {
+    throw new BadRequestException(`Failed to upload files: ${error.message}`);
+  }
+}
+
+// Helper method to map file entities to response DTOs
+private mapToUploadedFileResponse(fileEntity: any): UploadedFileResponseDto {
+  return {
+    id: fileEntity.id,
+    originalName: fileEntity.originalName,
+    url: fileEntity.url,
+    purpose: fileEntity.purpose,
+    uploadedAt: fileEntity.uploadedAt || fileEntity.createdAt
+  };
+}
 
   private generateUserListCacheKey(query: FindUserQueryDto): string {
     const { page = 1, limit = 10, email } = query;
@@ -195,7 +279,7 @@ export class AuthService {
       .leftJoinAndSelect('user.role', 'role') // join to access role.code
       .where('user.isVerified = :isVerified', { isVerified: false })
       .andWhere('role.code = :roleCode', { roleCode: 'USER' })
-      .orderBy('user.created_at', 'DESC')
+      .orderBy('user.createdAt', 'DESC')
       .skip(skip)
       .take(limit);
 
@@ -255,7 +339,9 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const user = await this.usersRepository.findOne({
       where: { email: loginDto.email },
+      relations: ['role'],
     });
+   
     if (
       !user ||
       !(await this.verifyPassword(loginDto.password, user.password))
@@ -263,6 +349,10 @@ export class AuthService {
       throw new UnauthorizedException(
         'Invalid credentials or account not exists',
       );
+    }
+     //if user role is USER, check if phone number is verified
+     if (user.role.code === 'USER' && !user.isPhoneVerified) {
+      throw new UnauthorizedException('Phone number not verified');
     }
 
     //generate
@@ -286,6 +376,7 @@ export class AuthService {
       email: user.email,
       sub: user.id,
       role: user.role.code,
+      type: 'access' // Add token type for clarity
     };
     return this.jwtService.sign(payload, {
       secret: 'jwt_secret',
@@ -297,6 +388,7 @@ export class AuthService {
   async getUserById(userId: number) {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
+      relations: ['role'],
     });
     if (!user) {
       throw new UnauthorizedException('User not found!');
@@ -307,19 +399,38 @@ export class AuthService {
 
   async refreshToken(refreshToken: string) {
     try {
+      // Verify the refresh token
       const payload = this.jwtService.verify(refreshToken, {
         secret: 'refresh_secret',
       });
+
+      // Check if it's actually a refresh token
+      if (payload.type !== 'refresh') {
+        throw new UnauthorizedException('Invalid token type');
+      }
+
+      // Get user with role
       const user = await this.usersRepository.findOne({
         where: { id: payload.sub },
+        relations: ['role'],
       });
+
       if (!user) {
-        throw new UnauthorizedException('Invalid token');
+        throw new UnauthorizedException('User not found');
       }
-      const accessToken = this.generateAccessToken(user);
-      return { accessToken };
-    } catch (e) {
-      throw new UnauthorizedException('Invalid token');
+
+      // Generate new access token
+      const newAccessToken = this.generateAccessToken(user);
+      
+      return { 
+        accessToken: newAccessToken,
+        message: 'Token refreshed successfully'
+      };
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('Refresh token expired');
+      }
+      throw new UnauthorizedException('Invalid refresh token');
     }
   }
 
@@ -327,10 +438,10 @@ export class AuthService {
     const payload = {
       email: user.email,
       sub: user.id,
-      role: user.role.code,
+      type: 'refresh' // Add token type for clarity
     };
     return this.jwtService.sign(payload, {
-      secret: 'jwt_secret',
+      secret: 'refresh_secret', // Use different secret
       expiresIn: '7d',
     });
   }

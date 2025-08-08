@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class RequestStatusService implements OnModuleInit {
+   
  
 constructor(@InjectRepository(RequestStatusEntity) private requestStatusRepository: Repository<RequestStatusEntity>){
 
@@ -54,4 +55,8 @@ constructor(@InjectRepository(RequestStatusEntity) private requestStatusReposito
       }
     }
     }
+
+    getRequestStatuses() {
+      return this.requestStatusRepository.find();
+  }
 }

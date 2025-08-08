@@ -7,6 +7,7 @@ import { RequestStatusEntity } from './requestStatus.entity';
 @Module({
   imports:[TypeOrmModule.forFeature([RequestStatusEntity])],
   controllers: [RequestStatusController],
-  providers: [RequestStatusService]
+  providers: [RequestStatusService],
+  exports:[RequestStatusService]
 })
 export class RequestStatusModule {}

@@ -2,8 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Transaction } from 'typeorm';
 import { TransactionEntity } from './transaction.entity';
-import { RequestService } from 'src/request/request.service';
-import { UserService } from 'src/user/user.service';
 import { RequestEntity } from 'src/request/request.entity';
 
 @Injectable()
@@ -12,8 +10,6 @@ export class TransactionService {
     constructor(
         @InjectRepository(TransactionEntity)
         private transactionRepository: Repository<TransactionEntity>,
-        private userService: UserService,
-        private requestService: RequestService
     ) {}
 
     //Automatically create transaction from request, when request is accepted

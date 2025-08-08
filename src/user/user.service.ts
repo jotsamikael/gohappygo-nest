@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './user.entity';
 import { FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
@@ -10,17 +10,21 @@ import { ChangePasswordDto } from './dto/changePassword.dto';
 import { UpdatePhoneDto } from './dto/UpdatePhone.dto';
 
 @Injectable()
-export class UserService {
+export class UserService implements OnModuleInit {
    
- 
-   
-
   //injecting service from another module
   constructor(
     @InjectRepository(UserEntity)
     private userRepository: Repository<UserEntity>,
     private roleService: RoleService,
   ) {}
+
+  async onModuleInit() {
+    await this.seedAdminUser();
+    await this.seedOperatorUser();
+  }
+
+  
 
   async findByField(
     field: string,
@@ -31,6 +35,7 @@ export class UserService {
       where: {
         [field]: value,
       },
+      relations: ['role'],
       withDeleted: includeDeleted,
     });
   }
@@ -42,7 +47,7 @@ export class UserService {
 
 
    async getUserByPhone(phone: string): Promise<UserEntity | null> {
-    const user = await this.userRepository.findOneBy({ phone });
+    const user = await this.userRepository.findOne({ where:{phone}, relations: ['role'] });
     if (!user) {
       throw new NotFoundException(`User with phone ${phone} not found`);
     }
@@ -50,7 +55,7 @@ export class UserService {
   }
 
   async getUserByEmail(email: string): Promise<UserEntity | null> {
-    const user = await this.userRepository.findOneBy({ email });
+    const user = await this.userRepository.findOne({ where: { email }, relations: ['role'] });
     if (!user) {
       throw new NotFoundException(`User with email ${email} not found`);
     }
@@ -58,7 +63,7 @@ export class UserService {
   }
 
   async getUserById(id: number): Promise<UserEntity> {
-    const user = await this.userRepository.findOneBy({ id });
+    const user = await this.userRepository.findOne({ where: { id }, relations: ['role'] });
     if (!user) {
       throw new NotFoundException(`User with ID ${id} was not found`);
     }
@@ -129,6 +134,13 @@ export class UserService {
     currentUser.lastName = updateUserDto.lastName;
   }
 
+  // update role
+  if (typeof updateUserDto.roleId === 'number') {
+    currentUser.roleId = updateUserDto.roleId;
+    currentUser.role = await this.roleService.getUserRoleById(updateUserDto.roleId);
+  }
+
+
   currentUser.updatedBy = user.id;
   const updatedUser = await this.userRepository.save(currentUser);
 
@@ -168,25 +180,56 @@ async restoreUserAccount(id: number): Promise<UpdateResult> {
     return user;
   }
 
- async getUserProfile(user:UserEntity): Promise<UserEntity | null> {
- 
-  const userProfile = this.userRepository.findOne({
-    where: { id:user.id },
-    relations: [
-      'role',
-      'demands',
-      'travels',
-      'activations',
-      'files',
-      'verificationLogs',
-      'verificationActions',
-    ],
-  });
-   if(!userProfile){
-     throw new NotFoundException(`User profile not found`)
-   }
+// Add this method to src/user/user.service.ts after the existing getUserProfile method
 
-   return userProfile;
+/**
+ * Get comprehensive user profile with all relations and counts
+ * This method returns the full user profile with all related data
+ */
+async getFullUserProfile(userId: number): Promise<any> {
+  try {
+    // Get user with all relations
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: [
+        'role',
+        'demands',
+        'travels',
+        'messagesSend',
+        'messagesReceived',
+        'files',
+        'requests',
+        'activations',
+        'verificationLogs',
+        'verificationActions',
+      ],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User profile not found`);
+    }
+
+    // Remove password from response
+    const { password, ...userWithoutPassword } = user;
+
+    // Add counts for better UX
+    const profileWithCounts = {
+      ...userWithoutPassword,
+      demandsCount: user.demands?.length || 0,
+      travelsCount: user.travels?.length || 0,
+      messagesSentCount: user.messagesSend?.length || 0,
+      messagesReceivedCount: user.messagesReceived?.length || 0,
+      requestsCount: user.requests?.length || 0,
+      filesCount: user.files?.length || 0,
+    };
+
+    return profileWithCounts;
+  } catch (error) {
+    if (error instanceof NotFoundException) {
+      throw error;
+    }
+    throw new NotFoundException(`Failed to fetch user profile: ${error.message}`);
+  }
 }
 
 
@@ -231,13 +274,14 @@ async updatePhoneNumber(user: UserEntity, updatePhoneDto: UpdatePhoneDto) {
 
         //get user
         const foundUser = await this.getUserById(user.id)
+        console.log(foundUser)
 
         if(!foundUser){
           throw new NotFoundException(`User not found`)
 
         }
         //if old and new phone number are the save, cancel
-       if( updatePhoneDto.newPhoneNumber =  updatePhoneDto.oldPhoneNumber){
+       if( updatePhoneDto.newPhoneNumber ==  updatePhoneDto.oldPhoneNumber){
         throw new BadRequestException(`Old phone number and new can not be the same`)
        }
        //
@@ -279,4 +323,147 @@ async updatePhoneNumber(user: UserEntity, updatePhoneDto: UpdatePhoneDto) {
     });
 }
 
+
+/**
+   * Seeds an admin user when the application starts
+   * This ensures there's always an admin user available for platform management
+   */
+private async seedAdminUser(): Promise<void> {
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@gohappygo.com';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123456';
+  const adminPhone = process.env.ADMIN_PHONE || '+1234567890';
+
+  try {
+    // Check if admin user already exists
+    const existingAdmin = await this.userRepository.findOne({
+      where: { email: adminEmail },
+      relations: ['role']
+    });
+
+    if (existingAdmin) {
+      console.log(`🟡 Admin user '${adminEmail}' already exists`);
+      return;
+    }
+
+    // Get admin role
+    const adminRole = await this.roleService.getUserRoleIdByCode('ADMIN');
+    if (!adminRole) {
+      console.log(`🔴 Admin role not found. Please ensure roles are seeded first.`);
+      return;
+    }
+
+    // Check if phone number is already in use
+    const existingPhone = await this.userRepository.findOne({
+      where: { phone: adminPhone }
+    });
+
+    if (existingPhone) {
+      console.log(`🔴 Phone number '${adminPhone}' is already in use. Please use a different phone number.`);
+      return;
+    }
+
+    // Hash password
+    const hashedPassword = await this.hashPassword(adminPassword);
+
+    // Create admin user
+    const adminUser = this.userRepository.create({
+      firstName: 'Admin',
+      lastName: 'User',
+      email: adminEmail,
+      phone: adminPhone,
+      username: 'admin',
+      password: hashedPassword,
+      roleId: adminRole.id,
+      isPhoneVerified: true,
+      isVerified: true,
+      profilePictureUrl: undefined
+    });
+
+    await this.userRepository.save(adminUser);
+    console.log(`🟢 Admin user '${adminEmail}' created successfully`);
+    console.log(`📧 Email: ${adminEmail}`);
+    console.log(`🔑 Password: ${adminPassword}`);
+    console.log(`📱 Phone: ${adminPhone}`);
+    console.log(`⚠️  Please change the default password after first login!`);
+    console.log(`🔐 Role: ${adminRole.name}`);
+
+  } catch (error) {
+    console.error(`🔴 Failed to seed admin user:`, error.message);
+    if (error.code === '23505') { // PostgreSQL unique constraint violation
+      console.log(`💡 Admin user might already exist with different credentials.`);
+    }
+  }
+}
+
+
+/**
+ * Seeds an operator user when the application starts
+ * This ensures there's always an operator user available for operational tasks
+ */
+private async seedOperatorUser(): Promise<void> {
+  const operatorEmail = process.env.OPERATOR_EMAIL || 'operator@gohappygo.com';
+  const operatorPassword = process.env.OPERATOR_PASSWORD || 'operator123456';
+  const operatorPhone = process.env.OPERATOR_PHONE || '+1234567891';
+
+  try {
+    // Check if operator user already exists
+    const existingOperator = await this.userRepository.findOne({
+      where: { email: operatorEmail },
+      relations: ['role']
+    });
+
+    if (existingOperator) {
+      console.log(`🟡 Operator user '${operatorEmail}' already exists`);
+      return;
+    }
+
+    // Get operator role
+    const operatorRole = await this.roleService.getUserRoleIdByCode('OPERATOR');
+    if (!operatorRole) {
+      console.log(`🔴 Operator role not found. Please ensure roles are seeded first.`);
+      return;
+    }
+
+    // Check if phone number is already in use
+    const existingPhone = await this.userRepository.findOne({
+      where: { phone: operatorPhone }
+    });
+
+    if (existingPhone) {
+      console.log(`🔴 Phone number '${operatorPhone}' is already in use. Please use a different phone number.`);
+      return;
+    }
+
+    // Hash password
+    const hashedPassword = await this.hashPassword(operatorPassword);
+
+    // Create operator user
+    const operatorUser = this.userRepository.create({
+      firstName: 'Operator',
+      lastName: 'User',
+      email: operatorEmail,
+      phone: operatorPhone,
+      username: 'operator',
+      password: hashedPassword,
+      roleId: operatorRole.id,
+      isPhoneVerified: true,
+      isVerified: true,
+      profilePictureUrl: undefined
+    });
+
+    await this.userRepository.save(operatorUser);
+    console.log(`🟢 Operator user '${operatorEmail}' created successfully`);
+    console.log(`📧 Email: ${operatorEmail}`);
+    console.log(`🔑 Password: ${operatorPassword}`);
+    console.log(`📱 Phone: ${operatorPhone}`);
+    console.log(`⚠️  Please change the default password after first login!`);
+    console.log(`🔐 Role: ${operatorRole.name}`);
+
+  } catch (error) {
+    console.error(`🔴 Failed to seed operator user:`, error.message);
+    if (error.code === '23505') { // PostgreSQL unique constraint violation
+      console.log(`💡 Operator user might already exist with different credentials.`);
+    }
+  }
+}
 }

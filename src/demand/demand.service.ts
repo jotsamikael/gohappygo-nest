@@ -83,6 +83,17 @@ export class DemandService {
     }
 
     async publishDemand(user:UserEntity, createDemandDto:CreateDemandDto):Promise<DemandEntity>{
+      //check if user account is verified
+      if(!user.isVerified){
+        throw new BadRequestException('Your account is not verified')
+      }
+      //check if the user has already published a demand with the same flight number
+      const existingDemand = await this.demandRepository.findOne({
+        where:{flightNumber:createDemandDto.flightNumber}
+      })
+      if(existingDemand){
+        throw new BadRequestException('You have already published a demand with the same flight number')
+      }
      const newDemand = await this.demandRepository.create({
         userId: user.id,
         title:createDemandDto.title,
@@ -93,6 +104,7 @@ export class DemandService {
         deliveryDate:createDemandDto.deliveryDate,
         weight:createDemandDto.weight,
         pricePerKg: createDemandDto.pricePerKg,
+        createdBy:user.id,
         user:user
      })
       return await this.demandRepository.save(newDemand);
@@ -106,7 +118,7 @@ export class DemandService {
     async getDemandByUser(id: number):Promise<DemandEntity[]>{
         const demands = await this.demandRepository.find({
             where:{userId: id},
-            relations:['user', 'request']
+            relations:['user', 'requests']
         })
         if(!demands){
          throw new NotAcceptableException(`User has no demands`)
@@ -151,7 +163,7 @@ async softDeleteDemandByUser(id: number): Promise<DemandEntity> {
 
 
 //get demands by airport
-async getDemandsByAirport(airportId: number): Promise<DemandEntity[]> {
+async getDemandsByDepartureAirport(airportId: number): Promise<DemandEntity[]> {
   return this.demandRepository.find({
     where: { originAirportId: airportId },
     relations: ['user']

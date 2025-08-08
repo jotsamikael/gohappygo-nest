@@ -14,7 +14,6 @@ import { TransactionService } from 'src/transaction/transaction.service';
 @Injectable()
 export class RequestService {
   
-
   constructor(@InjectRepository(RequestEntity) private requestRepository: Repository<RequestEntity>,
     private requestStatusHistoryService: RequestStatusHistoryService,
     private requestStatusService: RequestStatusService,
@@ -26,7 +25,10 @@ export class RequestService {
 
   //createRequest to seek travel
   async createRequestToTravel(createRequestDto: CreateRequestToTravelDto, user: UserEntity): Promise<RequestEntity> {
-
+    //check if user account is verified
+    if(!user.isVerified){
+      throw new BadRequestException('Your account is not verified')
+    }
     const request = this.requestRepository.create({
       travelId: createRequestDto.travelId,
       demandId: null,
@@ -34,6 +36,7 @@ export class RequestService {
       offerPrice: createRequestDto.offerPrice,
       packageDescription: createRequestDto.packageDescription,
       weight: createRequestDto.weight,
+      createdBy:user.id,
       requester: user
     })
 
@@ -51,6 +54,10 @@ export class RequestService {
 
 // Add this method to your RequestService class
 async createRequestToDemand(createRequestDto: CreateRequestToDemandDto, user: UserEntity): Promise<RequestEntity> {
+  //check if user account is verified
+  if(!user.isVerified){
+    throw new BadRequestException('Your account is not verified')
+  }
   const request = this.requestRepository.create({
     demandId: createRequestDto.demandId,
     travelId: null,
@@ -58,6 +65,7 @@ async createRequestToDemand(createRequestDto: CreateRequestToDemandDto, user: Us
     offerPrice: createRequestDto.offerPrice,
     packageDescription: "",
     weight: null,
+    createdBy:user.id,
     requester: user
   })
 
@@ -69,7 +77,7 @@ async createRequestToDemand(createRequestDto: CreateRequestToDemandDto, user: Us
   //add a request status history record
   this.requestStatusHistoryService.record(request.id, reqStatus!.id)
   return savedRequest;
-}
+} 
 
 
   //Get all Requests of a User

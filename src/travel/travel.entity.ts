@@ -49,6 +49,9 @@ export class TravelEntity extends BaseEntity {
   @Column('decimal', { precision: 10, scale: 2 })
   weightAvailable: number;
 
+  @Column('decimal', { precision: 10, scale: 2 })
+  pricePerKg: number;
+
   @Column({ type: 'enum', enum: ['active', 'filled', 'cancelled'] })
   status: string;
 

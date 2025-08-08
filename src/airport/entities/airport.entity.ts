@@ -1,5 +1,7 @@
-import { BaseEntity, Column } from "typeorm";
+import { BaseEntity } from "src/baseEntity/base.entity";
+import { Column, Entity } from "typeorm";
 
+@Entity()
 export class AirportEntity extends BaseEntity {
 
     @Column()
@@ -14,7 +16,7 @@ export class AirportEntity extends BaseEntity {
     @Column({ nullable: true })
     state?: string;
   
-    @Column()
+    @Column({nullable: true})
     iataCode: string;
   
     @Column()

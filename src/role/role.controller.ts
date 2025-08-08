@@ -10,7 +10,9 @@ import { UpdateUserRoleDto } from './dto/updateUserRole.dto';
 import { Roles } from 'src/auth/decorators/role.decorators';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles-guard';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('role')
 @Controller('role')
 export class RoleController {
 
@@ -19,12 +21,20 @@ export class RoleController {
     }
 
     @Post('')
-    @HttpCode(HttpStatus.CREATED)
+    @ApiBearerAuth('JWT-auth') 
+    @ApiOperation({ summary: 'Create a user role' })
+    @ApiBody({ type: CreateUserRoleDto })
+    @ApiResponse({ status: 201, description: 'User role created successfully',type: UserRoleEntity })
+    @ApiResponse({ status: 400, description: 'Bad request' })
     async createUserRole(@Body() createUserRoleDto:CreateUserRoleDto, @CurrentUser() user: any ): Promise<UserRoleEntity>{    
     return this.roleService.createUserRole(createUserRoleDto, user);
     }
 
     @Get()
+    @ApiBearerAuth('JWT-auth') 
+    @ApiOperation({ summary: 'Get all roles' })
+    @ApiResponse({ status: 200, description: 'Roles fetched successfully',type: UserRoleEntity })
+    @ApiResponse({ status: 400, description: 'Bad request' })
    async getAllRoles(
     @Query() query : FindRolesQueryDto
    ): Promise<PaginatedResponse<UserRoleEntity>>{
@@ -32,6 +42,10 @@ export class RoleController {
     }
 
     @Put(':id')
+    @ApiBearerAuth('JWT-auth') 
+    @ApiOperation({ summary: 'Update a user role' })
+    @ApiResponse({ status: 200, description: 'User role updated successfully',type: UserRoleEntity })
+    @ApiResponse({ status: 400, description: 'Bad request' })
     async updateRole(@Param('id', ParseIntPipe) id: number, @Body() updateUserRoleDto:UpdateUserRoleDto, @CurrentUser() user: any ){
         return this.roleService.updateUserRole(id, updateUserRoleDto, user)
     }
@@ -39,7 +53,10 @@ export class RoleController {
     @Roles(UserRole.ADMIN)
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Delete(':id')
-    @HttpCode(HttpStatus.NO_CONTENT)
+    @ApiBearerAuth('JWT-auth') 
+    @ApiOperation({ summary: 'Delete a user role' })
+    @ApiResponse({ status: 200, description: 'User role deleted successfully' })
+    @ApiResponse({ status: 400, description: 'Bad request' })
     async removeRole(@Param('id', ParseIntPipe) id: number):Promise<void>{
         this.roleService.deleteRole(id)
     }
