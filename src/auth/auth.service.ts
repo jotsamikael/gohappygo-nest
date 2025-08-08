@@ -120,10 +120,12 @@ export class AuthService {
       throw new NotFoundException(`activation record was not found`);
     }
 
-    //after saving to db, emit the user registered event, and send activation code by sms
-    this.userEventService.emitUserRegistered(newlyCreatedUser);
+   
 
     const { password, ...result } = saveUser;
+    //emit user registered event
+    this.userEventService.emitUserRegistered(saveUser);
+
     return {
       user: result,
       message: 'Register successful, You can now verify your account',
@@ -153,6 +155,9 @@ export class AuthService {
 
     //then update useractivation record by updating validated at
     await this.userActivationService.setValidatedDate(latestActivation);
+
+    //emit user phone verified event
+    this.userEventService.emitPhoneVerified(user!, verifyPhoneDto.phoneNumber);
 
     return {
       message: 'Phone number verified successfully',
@@ -229,6 +234,9 @@ async uploadVerificationDocuments(
         this.mapToUploadedFileResponse(idBackFile)
       ]
     };
+
+    //emit user verification documents uploaded event
+    this.userEventService.emitVerificationDocumentsUploaded(user, ['ID_FRONT', 'ID_BACK', 'SELFIE'], 3, uploadVerificationDto.notes);
 
     return response;
   } catch (error) {
@@ -325,7 +333,8 @@ private mapToUploadedFileResponse(fileEntity: any): UploadedFileResponseDto {
 
     await this.userService.save(user);
 
-    //send email with reject reason if any
+    //emit user verification status changed event
+    this.userEventService.emitVerificationStatusChanged(user, verifyUserAccountDto.approved ? 'approved' : 'rejected', verifyUserAccountDto.reason, admin);
 
     //record account verification
     await this.userAccountVerificationService.record(

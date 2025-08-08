@@ -162,6 +162,14 @@ async completeRequest(requestId: number, user: UserEntity): Promise<RequestEntit
   if (!request) {
     throw new NotFoundException('Request not found');
   }
+  const acceptedStatus = await this.requestStatusService.getRequestByStatus('ACCEPTED');
+  if (!acceptedStatus) {
+    throw new NotFoundException('Accepted status not found');
+  }
+  //0. check if request is in ACCEPTED status
+  if (request.currentStatusId !== acceptedStatus.id) {
+    throw new BadRequestException('Request is not in ACCEPTED status');
+  }
   // 1. Check if the user is authorized to complete this request
   const isAuthorized = request.requesterId === user.id;
   if (!isAuthorized) {
@@ -176,10 +184,26 @@ async completeRequest(requestId: number, user: UserEntity): Promise<RequestEntit
   request.currentStatusId = completedStatus.id;
   await this.requestRepository.save(request);
 
-  // 3. Release funds from stripe to payee
-  await this.transactionService.releaseFundsFromStripe(request.id);
+  //get transction by request id
+  const transaction = await this.transactionService.getTransactionByRequestId(requestId);
+  if (!transaction) {
+    throw new NotFoundException('Transaction not found');
+  }
 
-  return request;
+  // 3. Release funds from stripe to payee
+  await this.transactionService.releaseFundsFromStripe(transaction.id, user);
+
+  // Fetch the request again with updated transaction relations
+  const updatedRequest = await this.requestRepository.findOne({
+    where: { id: requestId },
+    relations: ['transactions', 'demand', 'travel', 'demand.user', 'travel.user']
+  });
+
+  if (!updatedRequest) {
+    throw new NotFoundException('Updated Request not found');
+  }
+
+  return updatedRequest;
 }
 
 // Helper method for travel requests

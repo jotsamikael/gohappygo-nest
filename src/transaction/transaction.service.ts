@@ -1,11 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Transaction } from 'typeorm';
 import { TransactionEntity } from './transaction.entity';
 import { RequestEntity } from 'src/request/request.entity';
+import { UserEntity } from 'src/user/user.entity';
 
 @Injectable()
 export class TransactionService {
+
 
     constructor(
         @InjectRepository(TransactionEntity)
@@ -49,11 +51,29 @@ export class TransactionService {
 
    //After service is performed, funds are released from stripe to payee
    //This is triggered when payer marks request as completed
-   async releaseFundsFromStripe(transactionId: number): Promise<void> {
+   async releaseFundsFromStripe(transactionId: number, user: UserEntity): Promise<void> {
     const transaction = await this.getTransactionById(transactionId);
     if (!transaction) {
         throw new NotFoundException('Transaction not found');
     }
+    //check if user is payer
+    if (transaction.payerId !== user.id) {
+        throw new ForbiddenException('You are not the payer of this transaction');
+    }
+    //check if transaction is pending
+    if (transaction.status !== 'pending') {
+        throw new BadRequestException('Transaction is not pending');
+    }
+    //release funds from stripe
+    await this.transactionRepository.update(transactionId, { status: 'paid' });
    }
     
+
+   async getTransactionByRequestId(requestId: number): Promise<TransactionEntity > {
+    const transaction = await this.transactionRepository.findOne({ where: { requestId } });
+    if (!transaction) {
+        throw new NotFoundException('Transaction not found');
+    }
+    return transaction;
+   }
 }

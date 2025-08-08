@@ -48,9 +48,11 @@ import { ReviewEntity } from './review/review.entity';
 import { UserVerificationAuditEntity } from './user-verification-audit-entity/user-verification-audit.entity';
 import { AirportModule } from './airport/airport.module';
 import { AirportEntity } from './airport/entities/airport.entity';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
+    EmailModule,
     //file upload
     ConfigModule.forRoot({
       isGlobal: true,
@@ -94,7 +96,7 @@ import { AirportEntity } from './airport/entities/airport.entity';
       }) */
      load:[appConfig]
     })
-    , UserModule, AuthModule,UserVerificationAuditModule, FileUploadModule, EventsModule, DemandModule, TravelModule, RequestModule, RoleModule, ReviewModule, TransactionModule, RequestStatusModule, RequestStatusHistoryModule, DeliveryProofModule, InsuranceModule, LegalProtectionModule, MessageModule, UserActivationModule, UploadedFileModule, UserVerificationAuditModule, AirportModule],
+    , UserModule, AuthModule,UserVerificationAuditModule, FileUploadModule, EventsModule, DemandModule, TravelModule, RequestModule, RoleModule, ReviewModule, TransactionModule, RequestStatusModule, RequestStatusHistoryModule, DeliveryProofModule, InsuranceModule, LegalProtectionModule, MessageModule, UserActivationModule, UploadedFileModule, UserVerificationAuditModule, AirportModule, EmailModule],
   controllers: [AppController, UserController],
   providers: [AppService],
 })

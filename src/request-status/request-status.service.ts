@@ -41,6 +41,11 @@ constructor(@InjectRepository(RequestStatusEntity) private requestStatusReposito
         status: 'DELIVERED',
         comment: 'Parcel has been delivered',
       },
+      {
+        label: 'Completed',
+        status: 'COMPLETED',
+        comment: 'Request has been completed',
+      },
     ];
 
     for (const requestStatus of defaultRequestatus) {

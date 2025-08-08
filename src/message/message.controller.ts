@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorattor';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserEntity } from 'src/user/user.entity';
@@ -44,6 +44,18 @@ export class MessageController {
     @ApiResponse({ status: 400, description: 'Bad request' })
     async getUnreadCount(@CurrentUser() user: UserEntity) {
       return this.messageService.getUnreadCount(user);
+    }
+
+
+    //mark thread as read
+    @Patch('thread/:requestId/read')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth('JWT-auth') 
+    @ApiOperation({ summary: 'Mark thread as read' })
+    @ApiResponse({ status: 200, description: 'Thread marked as read' })
+    @ApiResponse({ status: 400, description: 'Bad request' })
+    async markThreadAsRead(@Param('requestId', ParseIntPipe) requestId: number, @CurrentUser() user: UserEntity) {
+      return this.messageService.markThreadAsRead(requestId, user);
     }
   }
 

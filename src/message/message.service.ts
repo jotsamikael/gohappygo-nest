@@ -25,6 +25,7 @@ export class MessageService {
       receiver,
       request,
       isRead: false,
+      createdBy: sender.id,
     });
     return this.messageRepository.save(message);
   }

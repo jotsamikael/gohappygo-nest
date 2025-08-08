@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { DemandResponseDto } from 'src/demand/dto/demand-response.dto';
 import { MessageResponseDto } from 'src/message/dto/message-response.dto';
+import { RequestResponseDto } from 'src/request/dto/request-reponse.dto';
 import { TravelResponseDto } from 'src/travel/dto/travel-response.dto';
 
 export class UserRoleResponseDto {
@@ -34,19 +35,7 @@ export class UploadedFileResponseDto {
   uploadedAt: Date;
 }
 
-export class RequestResponseDto {
-  @ApiProperty({ example: 1 })
-  id: number;
 
-  @ApiProperty({ example: 'GoAndGo' })
-  requestType: string;
-
-  @ApiProperty({ example: 50.0 })
-  offerPrice: number;
-
-  @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
-  createdAt: Date;
-}
 
 export class UserProfileResponseDto {
   @ApiProperty({ example: 1 })

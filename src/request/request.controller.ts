@@ -91,4 +91,15 @@ export class RequestController {
   ) {
     return this.requestService.acceptRequest(id, user);
   }
+
+
+  @Patch(':id/complete')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth') 
+  @ApiOperation({ summary: 'Complete a request' })
+  @ApiResponse({ status: 200, description: 'Request completed successfully',type: RequestResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  async completeRequest(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: UserEntity) {
+    return this.requestService.completeRequest(id, user);
+  }
 }

@@ -1,24 +1,23 @@
 import { Module } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { UserEventsService } from './user-events.service';
-import { UserRegisteredListener } from './listerners/user-registered.listener';
+import { AllEventsListener } from './listeners/all-events.listener';
+import { EmailModule } from 'src/email/email.module';
 
 @Module({
-    imports:[
-        EventEmitterModule.forRoot({
-            global:true,
-            wildcard: false,
-            maxListeners:20,
-            verboseMemoryLeak:true
-
-        })
-    ],
-    providers:[
-        UserEventsService,
-        UserRegisteredListener
-    ],
-    exports:[
-        UserEventsService
-    ]
+  imports: [
+    EmailModule,
+    EventEmitterModule.forRoot({
+      global: true,
+      wildcard: false,
+      maxListeners: 20,
+      verboseMemoryLeak: true
+    })
+  ],
+  providers: [
+    UserEventsService,
+    AllEventsListener
+  ],
+  exports: [UserEventsService]
 })
 export class EventsModule {}
