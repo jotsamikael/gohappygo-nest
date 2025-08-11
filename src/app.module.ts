@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { UserController } from './user/user.controller';
 import { UserService } from './user/user.service';
 import { UserModule } from './user/user.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as joi from 'joi'
 import appConfig from './config/appConfig';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -53,9 +53,19 @@ import { EmailModule } from './email/email.module';
 @Module({
   imports: [
     EmailModule,
-    //file upload
+    // Configuration Module - Load first
     ConfigModule.forRoot({
       isGlobal: true,
+      validationSchema: joi.object({
+        DB_HOST: joi.string().default('localhost'),
+        DB_PORT: joi.number().default(3306),
+        DB_USERNAME: joi.string().required(),
+        DB_PASSWORD: joi.string().allow('').default(''),
+        DB_DATABASE: joi.string().required(),
+        PORT: joi.number().default(3000),
+        NODE_ENV: joi.string().valid('development', 'production', 'test').default('development'),
+      }),
+      load: [appConfig]
     }),
     //Caching
     CacheModule.register({
@@ -69,34 +79,34 @@ import { EmailModule } from './email/email.module';
         limit:5
       }
     ]),
-    //Orm
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: 'localhost',
-      port: 3306,
-      username: 'root',
-      password: '',
-      database: 'gohappygo',
-      entities: [ UserEntity, UserRoleEntity, AirportEntity,
-        DemandEntity, RequestEntity,
-        TravelEntity, TransactionEntity,
-        RequestStatusEntity, RequestStatusHistoryEntity,
-        ReviewEntity, DeliveyProofEntity,
-        InsuranceEntity, MessageEntity,
-        LegalProtectionEntity,UserActivationEntity,
-        UploadedFileEntity,UserVerificationAuditEntity,
-         File], //array of entities that you want to register
-      synchronize: true, //dev mode
+    //ORM - Use ConfigService to get environment variables
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: 'mysql',
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_DATABASE'),
+        entities: [ 
+          UserEntity, UserRoleEntity, AirportEntity,
+          DemandEntity, RequestEntity,
+          TravelEntity, TransactionEntity,
+          RequestStatusEntity, RequestStatusHistoryEntity,
+          ReviewEntity, DeliveyProofEntity,
+          InsuranceEntity, MessageEntity,
+          LegalProtectionEntity, UserActivationEntity,
+          UploadedFileEntity, UserVerificationAuditEntity,
+          File
+        ],
+        synchronize: configService.get<string>('NODE_ENV') === 'development', // Only in dev mode
+        logging: configService.get<string>('NODE_ENV') === 'development',
+      }),
+      inject: [ConfigService],
     }),
-
-    ConfigModule.forRoot({
-      isGlobal:true, //makes configmodule globally available
-      /* validationSchema: joi.object({
-        APP_NAME: joi.string().default('defaultApp'),
-      }) */
-     load:[appConfig]
-    })
-    , UserModule, AuthModule,UserVerificationAuditModule, FileUploadModule, EventsModule, DemandModule, TravelModule, RequestModule, RoleModule, ReviewModule, TransactionModule, RequestStatusModule, RequestStatusHistoryModule, DeliveryProofModule, InsuranceModule, LegalProtectionModule, MessageModule, UserActivationModule, UploadedFileModule, UserVerificationAuditModule, AirportModule, EmailModule],
+    UserModule, AuthModule, UserVerificationAuditModule, FileUploadModule, EventsModule, DemandModule, TravelModule, RequestModule, RoleModule, ReviewModule, TransactionModule, RequestStatusModule, RequestStatusHistoryModule, DeliveryProofModule, InsuranceModule, LegalProtectionModule, MessageModule, UserActivationModule, UploadedFileModule, UserVerificationAuditModule, AirportModule, EmailModule
+  ],
   controllers: [AppController, UserController],
   providers: [AppService],
 })
@@ -105,5 +115,4 @@ export class AppModule implements NestModule{
    // Apply middleware for all routes
     consumer.apply(LoggerMiddleware).forRoutes('*');
   }
-  
 }

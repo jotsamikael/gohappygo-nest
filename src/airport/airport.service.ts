@@ -13,7 +13,7 @@ import { fileURLToPath } from 'url';
 export class AirportService implements OnModuleInit {
 
   async onModuleInit() {
-    //await this.seedAirportData();
+    await this.seedAirportData();
   }
 
   constructor(
