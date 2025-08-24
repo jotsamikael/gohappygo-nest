@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyPhoneDto } from './dto/verifyPhone.dto';
-import { FindUserQueryDto } from './dto/FindUserQuery.dto';
+import { FindUsersQueryDto } from './dto/FindUsersQuery.dto';
 import { VerifyUserAccountDto } from './dto/verifyUserAccount.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles-guard';
@@ -15,8 +15,9 @@ import { FileFieldsInterceptor, FileInterceptor, FilesInterceptor } from '@nestj
 import { UploadFileDto } from 'src/file-upload/dto/upload-file.dto';
 import { PaginatedResponse } from 'src/common/interfaces/paginated-reponse.interfaces';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody, ApiConsumes, ApiQuery } from '@nestjs/swagger';
-import { RegisterResponseDto, LoginResponseDto, VerifyPhoneResponseDto, RefreshTokenResponseDto, UploadVerificationResponseDto } from './dto/auth-response.dto';
+import { RegisterResponseDto, LoginResponseDto, VerifyPhoneResponseDto, RefreshTokenResponseDto, UploadVerificationResponseDto, VerifyEmailResponseDto } from './dto/auth-response.dto';
 import { UploadVerificationDto } from './dto/upload-verification.dto';
+import { VerifyEmailDto } from './dto/verifyEmail.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -36,10 +37,27 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
-  @Post('verify-phone')
-  @ApiOperation({ summary: 'Verify phone number with activation code' })
+  @Post('verify-email')
+  @ApiOperation({ summary: 'Verify email  with code' })
   @ApiBody({
-    description: 'Verify phone number with activation code',
+    description: 'Verify email  with  code',
+    type: VerifyPhoneDto,
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Email verified successfully',
+    type: VerifyEmailResponseDto
+  })
+  @ApiResponse({ status: 400, description: 'Invalid  code' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+    return this.authService.verifyEmail(verifyEmailDto);
+  }
+
+  @Post('verify-phone')
+  @ApiOperation({ summary: 'Verify phone number with code' })
+  @ApiBody({
+    description: 'Verify phone number with  code',
     type: VerifyPhoneDto,
   })
   @ApiResponse({ 
@@ -50,7 +68,7 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Invalid activation code' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async verifyPhone(@Body() verifyPhoneDto: VerifyPhoneDto) {
-    return this.authService.verifyPhoneNumber(verifyPhoneDto);
+    return this.authService.verifyPhone(verifyPhoneDto);
   }
 
 
@@ -186,35 +204,7 @@ async uploadVerificationDocuments(
     };
   }
 
-  @Get('unverified-users')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @ApiBearerAuth('JWT-auth')
-  @ApiQuery({
-    name: 'page',
-    type: Number,
-    description: 'Page number',
-    required: false
-  })
-  @ApiQuery({
-    name: 'limit',
-    type: Number,
-    description: 'Number of items per page',
-    required: false
-  })
-  @ApiQuery({
-    name: 'search',
-    type: String,
-    description: 'Search query',
-    required: false
-  })
-  @ApiOperation({ summary: 'Get unverified user accounts (Admin only)' })
-  @ApiResponse({ status: 200, description: 'List of unverified users' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
-  async unVerifiedUserAccounts(@Query() query :FindUserQueryDto): Promise<PaginatedResponse<Partial<UserEntity>>>{
-    return this.authService.getUnVerifiedUser(query);
-  }
+
 
   @Post('verify-user/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)

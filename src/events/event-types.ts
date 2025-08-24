@@ -9,6 +9,7 @@ export enum UserEventType {
     // Verification Events
     PHONE_VERIFICATION_REQUESTED = 'user.phone_verification_requested',
     PHONE_VERIFIED = 'user.phone_verified',
+    EMAIL_VERIFIED = 'user.email_verified',
     VERIFICATION_DOCUMENTS_UPLOADED = 'user.verification_documents_uploaded',
     VERIFICATION_APPROVED = 'user.verification_approved',
     VERIFICATION_REJECTED = 'user.verification_rejected',

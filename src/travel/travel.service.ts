@@ -2,8 +2,6 @@ import { BadRequestException, Inject, Injectable, NotAcceptableException, NotFou
 import { TravelEntity } from './travel.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginatedResponse } from 'src/common/interfaces/paginated-reponse.interfaces';
-import { DemandEntity } from 'src/demand/demand.entity';
-import { FindDemandsQueryDto } from 'src/demand/dto/FindDemandsQuery.dto';
 import { UserEntity } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
 import { FindTravelsQueryDto } from './dto/findTravelsQuery.dto';
@@ -56,19 +54,87 @@ export class TravelService {
                     return getCachedData
                 }
                 console.log(`Cache Miss---------> Returning travels list from database`)
-                const { page = 1, limit = 10, title } = query;
+                const { page = 1, 
+                  limit = 10,
+                   title,
+                   flightNumber, 
+      departureAirportId, 
+      arrivalAirportId, 
+      userId, 
+      weightAvailable,
+      status, 
+      deliveryDate, 
+      orderBy = 'createdAt:desc'
+                   } = query;
                 const skip = (page - 1) * limit;
+                    // First, let's check if there are any travels at all
+  const totalTravelsInDB = await this.travelRepository.count();
+  
+
+
+
                 const queryBuilder = this.travelRepository.createQueryBuilder('travel')
-                .orderBy('travel.created_at', 'DESC').skip(skip).take(limit)
-        
+                .skip(skip).take(limit)
+          // Apply filters
+
                 if (title) {
-                    queryBuilder.andWhere('travel.code ILIKE :title', { title: `%${title}%` })
+                    queryBuilder.andWhere('LOWER(travel.title) LIKE LOWER(:title)', { title: `%${title}%` })
                 }
-        
-                const [items, totalItems] = await queryBuilder.getManyAndCount();
-        
-                const totalPages = Math.ceil(totalItems / limit);
-        
+
+                if (flightNumber) {
+                  queryBuilder.andWhere('travel.flightNumber = :flightNumber', { flightNumber });
+              }
+            
+              if (departureAirportId) {
+                  queryBuilder.andWhere('travel.departureAirportId = :departureAirportId', { departureAirportId });
+              }
+            
+              if (arrivalAirportId) {
+                  queryBuilder.andWhere('travel.arrivalAirportId = :arrivalAirportId', { arrivalAirportId });
+              }
+            
+              if (userId) {
+                  queryBuilder.andWhere('travel.userId = :userId', { userId });
+              }
+
+              if (weightAvailable) {
+                  queryBuilder.andWhere('travel.weightAvailable >= :weightAvailable', { weightAvailable });
+              }
+
+              if (status) {
+                  queryBuilder.andWhere('travel.status = :status', { status });
+              }
+
+              if (deliveryDate) {
+                  queryBuilder.andWhere('DATE(travel.arrivalDatetime) = DATE(:deliveryDate)', { deliveryDate });
+              }
+
+              // Apply sorting
+              const [sortField, sortDirection] = orderBy.split(':');
+              const validSortFields = ['createdAt', 'arrivalDatetime', 'pricePerKg', 'weightAvailable'];
+              const validSortDirections = ['asc', 'desc'];
+              
+              if (validSortFields.includes(sortField) && validSortDirections.includes(sortDirection)) {
+                  queryBuilder.orderBy(`travel.${sortField}`, sortDirection.toUpperCase() as 'ASC' | 'DESC');
+                  console.log('Added sorting:', orderBy);
+              } else {
+                  queryBuilder.orderBy('travel.createdAt', 'DESC'); // default
+                  console.log('Added default sorting: createdAt:DESC');
+              }
+
+              // Get the count first (without joins to avoid complex queries)
+              const totalItems = await queryBuilder.getCount();
+              
+              // Now add the joins for the actual data
+              queryBuilder
+                  .leftJoinAndSelect('travel.user', 'user')
+                  .leftJoinAndSelect('travel.departureAirport', 'departureAirport')
+                  .leftJoinAndSelect('travel.arrivalAirport', 'arrivalAirport');
+
+              const items = await queryBuilder.getMany();
+              
+              const totalPages = Math.ceil(totalItems / limit);
+
                 const responseResult = {
                     items,
                     meta: {
@@ -97,7 +163,7 @@ export class TravelService {
       if(existingTravel){
         throw new BadRequestException('You have already published a travel with the same flight number')
       }
-     const newDemand = await this.travelRepository.create({
+     const newTravel = await this.travelRepository.create({
         userId: user.id,
         title: createTravelDto.title,
         flightNumber:createTravelDto.flightNumber,
@@ -113,77 +179,58 @@ export class TravelService {
         status:'active',
         user:user
      })
-      return await this.travelRepository.save(newDemand);
+      return await this.travelRepository.save(newTravel);
     }
 
+    async softDeleteTravel(id: number): Promise<TravelEntity> {
+      const travel = await this.travelRepository.findOne({
+        where: { id },
+        relations: ['requests', 'requests.requestStatusHistory', 'requests.requestStatusHistory.requestStatuses'],
+      });
 
-    /*async updateDemand(user:UserEntity,createDemandDto:CreateDemandDto):Promise<DemandEntity>{
-     
-    }*/
+      if (!travel) {
+        throw new NotFoundException(`No travel with id ${id} found`);
+      }
 
+      for (const request of travel.requests) {
+        // Defensive: skip if no status history
+        if (!request.requestStatusHistory || request.requestStatusHistory.length === 0) continue;
 
-    async getTravelByUser(id: number):Promise<TravelEntity[]>{
-        const demands = await this.travelRepository.find({
-            where:{userId: id},
-            relations:['user', 'requests']
-        })
-        if(!demands){
-         throw new NotAcceptableException(`User has no demands`)
+        // Get the most recent status history based on creation timestamp
+        const sortedHistory = [...request.requestStatusHistory].sort(
+          (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+        );
+
+        const latestStatus = sortedHistory[0]?.requestStatus?.status;
+
+        if (latestStatus === 'ACCEPTED') {
+          throw new BadRequestException(
+            `Cannot delete this travel because one of its requests was already accepted.`
+          );
         }
+      }
 
-        return demands;
+      // Soft-delete by changing status
+      travel.status = 'cancelled';
+      return this.travelRepository.save(travel);
     }
 
-
-async softDeleteTravel(id: number): Promise<TravelEntity> {
-  const travel = await this.travelRepository.findOne({
-    where: { id },
-    relations: ['requests', 'requests.requestStatusHistory', 'requests.requestStatusHistory.requestStatuses'],
-  });
-
-  if (!travel) {
-    throw new NotFoundException(`No travel with id ${id} found`);
+    async findOne(options: any): Promise<TravelEntity | null> {
+      return await this.travelRepository.findOne(options);
   }
 
-  for (const request of travel.requests) {
-    // Defensive: skip if no status history
-    if (!request.requestStatusHistory || request.requestStatusHistory.length === 0) continue;
+  async save(travel: TravelEntity): Promise<TravelEntity> {
+      return await this.travelRepository.save(travel);
+  }
 
-    // Get the most recent status history based on creation timestamp
-    const sortedHistory = [...request.requestStatusHistory].sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-    );
 
-    const latestStatus = sortedHistory[0]?.requestStatus?.status;
 
-    if (latestStatus === 'ACCEPTED') {
-      throw new BadRequestException(
-        `Cannot delete this demand because one of its requests was already accepted.`
-      );
+    // Add this method to clear travel list cache
+    private async clearTravelListCache(): Promise<void> {
+        // Clear all travel list cache keys
+        for (const cacheKey of this.travelListCacheKeys) {
+            await this.cacheManager.del(cacheKey);
+        }
+        this.travelListCacheKeys.clear();
     }
-  }
-
-  // Soft-delete by changing status
-  travel.status = 'cancelled';
-  return this.travelRepository.save(travel);
-}
-
-
-//get travels by airport
-async getTravelsByDepartureAirport(airportId: number): Promise<TravelEntity[]> {
-  return this.travelRepository.find({
-    where: { departureAirportId: airportId },
-    relations: ['user']
-  });
-}
-
-findOne(arg0: { where: { id: number }; }): Promise<TravelEntity | null> {
-  return this.travelRepository.findOne({
-    where: arg0.where
-  });
-}
-
-save(travel: TravelEntity): Promise<TravelEntity> {
-  return this.travelRepository.save(travel);
-}
 }

@@ -39,9 +39,7 @@ import {DeliveyProofEntity } from './delivery-proof/delivery-proof.entity';
 import { InsuranceEntity } from './insurance/insurance.entity';
 import { MessageEntity } from './message/message.entity';
 import { LegalProtectionEntity } from './legal-protection/legal-protection.entity';
-import { UserActivationModule } from './user-activation/user-activation.module';
 import { UploadedFileModule } from './uploaded-file/uploaded-file.module';
-import { UserActivationEntity } from './user-activation/user-activation.entity';
 import { UploadedFileEntity } from './uploaded-file/uploaded-file.entity';
 import { UserVerificationAuditModule } from './user-verification-audit-entity/user-verification-audit.module';
 import { ReviewEntity } from './review/review.entity';
@@ -49,6 +47,15 @@ import { UserVerificationAuditEntity } from './user-verification-audit-entity/us
 import { AirportModule } from './airport/airport.module';
 import { AirportEntity } from './airport/entities/airport.entity';
 import { EmailModule } from './email/email.module';
+import { AirlineModule } from './airline/airline.module';
+import { FlightModule } from './flight/flight.module';
+import { AirlineEntity } from './airline/entities/airline.entity';
+import { FlightEntity } from './flight/entities/flight.entity';
+import { EmailVerificationModule } from './email-verification/email-verification.module';
+import { PhoneVerificationModule } from './phone-verification/phone-verification.module';
+import { EmailVerificationEntity } from './email-verification/email-verification.entity';
+import { PhoneVerificationEntity } from './phone-verification/phone-verification.entity';
+import { DemandAndTravelModule } from './demand-and-travel/demand-and-travel.module';
 
 @Module({
   imports: [
@@ -96,8 +103,11 @@ import { EmailModule } from './email/email.module';
           RequestStatusEntity, RequestStatusHistoryEntity,
           ReviewEntity, DeliveyProofEntity,
           InsuranceEntity, MessageEntity,
-          LegalProtectionEntity, UserActivationEntity,
+          LegalProtectionEntity, EmailVerificationEntity,
+          PhoneVerificationEntity,
           UploadedFileEntity, UserVerificationAuditEntity,
+          AirlineEntity,
+          FlightEntity,
           File
         ],
         synchronize: configService.get<string>('NODE_ENV') === 'development', // Only in dev mode
@@ -105,7 +115,12 @@ import { EmailModule } from './email/email.module';
       }),
       inject: [ConfigService],
     }),
-    UserModule, AuthModule, UserVerificationAuditModule, FileUploadModule, EventsModule, DemandModule, TravelModule, RequestModule, RoleModule, ReviewModule, TransactionModule, RequestStatusModule, RequestStatusHistoryModule, DeliveryProofModule, InsuranceModule, LegalProtectionModule, MessageModule, UserActivationModule, UploadedFileModule, UserVerificationAuditModule, AirportModule, EmailModule
+    UserModule,AirlineModule, AuthModule, 
+    UserVerificationAuditModule, 
+    FileUploadModule, EventsModule, DemandModule,
+     TravelModule, RequestModule, RoleModule, ReviewModule, TransactionModule, RequestStatusModule, RequestStatusHistoryModule, DeliveryProofModule, InsuranceModule, LegalProtectionModule, MessageModule,
+     EmailVerificationModule, PhoneVerificationModule, 
+     UploadedFileModule, UserVerificationAuditModule, AirportModule, EmailModule, DemandAndTravelModule, AirlineModule, FlightModule, EmailVerificationModule, PhoneVerificationModule
   ],
   controllers: [AppController, UserController],
   providers: [AppService],

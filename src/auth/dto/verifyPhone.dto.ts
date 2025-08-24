@@ -1,20 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsPhoneNumber, Length, MaxLength } from 'class-validator';
+import { IsString, Length, Matches } from 'class-validator';
 
 export class VerifyPhoneDto {
-  @ApiProperty({
-    description: 'User phone number',
-    example: '+237694356789'
-  })
-  @IsNotEmpty()
-  @IsPhoneNumber()
+  @ApiProperty({ description: 'User phone number', example: '+237694356789' })
+  @IsString()
+  @Matches(/^\+?[1-9]\d{1,14}$/, { message: 'Phone number must be in international format' })
   phoneNumber: string;
 
-  @ApiProperty({
-    description: 'Activation code',
-    example: '12345'
-  })
-  @IsNotEmpty()
-  @MaxLength(5, { message: 'Activation code must be 5 digits' })
-  activationCode: string;
+  @ApiProperty({ description: '6-digit verification code sent via SMS' })
+  @IsString()
+  @Length(6, 6)
+  verificationCode: string;
 }

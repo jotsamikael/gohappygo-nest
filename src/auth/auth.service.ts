@@ -16,7 +16,6 @@ import { UserEventsService } from 'src/events/user-events.service';
 import { UserRoleEntity } from 'src/role/userRole.entity';
 import { UserEntity, UserRole } from 'src/user/user.entity';
 import { UserService } from 'src/user/user.service';
-import { UserActivationService } from 'src/user-activation/user-activation.service';
 import { RoleService } from 'src/role/role.service';
 import { VerifyPhoneDto } from './dto/verifyPhone.dto';
 import { UploadFileDto } from 'src/file-upload/dto/upload-file.dto';
@@ -25,11 +24,18 @@ import { VerifyUserAccountDto } from './dto/verifyUserAccount.dto';
 import { UserVerificationAuditService } from 'src/user-verification-audit-entity/user-verification-audit.service';
 import { PaginatedResponse } from '../common/interfaces/paginated-reponse.interfaces';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { FindUserQueryDto } from './dto/FindUserQuery.dto';
+import { FindUsersQueryDto } from './dto/FindUsersQuery.dto';
 import { Cache } from 'cache-manager';
 import { FilePurpose } from 'src/uploaded-file/uploaded-file-purpose.enum';
 import { UploadVerificationResponseDto, UploadedFileResponseDto } from './dto/auth-response.dto';
 import { UploadVerificationDto } from './dto/upload-verification.dto';
+import { SmsService } from 'src/sms/sms.service';
+import { EmailService } from 'src/email/email.service';
+import { VerifyEmailDto } from './dto/verifyEmail.dto';
+import { ResendVerificationDto, VerificationType } from './dto/resendVerification.dto';
+import { EmailTemplatesService } from 'src/email/email-templates.service';
+import { EmailVerificationService } from 'src/email-verification/email-verification.service';
+import { PhoneVerificationService } from 'src/phone-verification/phone-verification.service';
 
 @Injectable()
 export class AuthService {
@@ -43,8 +49,12 @@ export class AuthService {
     private readonly roleService: RoleService,
     private userService: UserService,
     private fileUploadService: FileUploadService,
-    private userActivationService: UserActivationService,
     private userAccountVerificationService: UserVerificationAuditService,
+    private emailVerificationService: EmailVerificationService,
+    private phoneVerificationService: PhoneVerificationService,
+    private smsService: SmsService,
+    private emailService: EmailService,
+    private emailTemplatesService: EmailTemplatesService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
     //bcrypt.hash('123456789',10).then(console.log) //this function allows you to generate the password for a user
@@ -100,69 +110,139 @@ export class AuthService {
       phone: registerDto.phoneNumber,
       password: hashedPassword,
       roleId: userRole?.id,
+      isEmailVerified: false,
+      isPhoneVerified: false,
+      isVerified: false,
     });
 
     const saveUser = await this.usersRepository.save(newlyCreatedUser);
 
-    //generate 5 digit code
-    const activationCode = this.generate5DigitCode();
-    console.log(`activation Code is : ${activationCode}`);
+    // Generate verification codes
+    const emailVerificationCode = this.generate6DigitCode();
+    const phoneVerificationCode = this.generate6DigitCode();
 
-    //save activation record
-    const activationRecord =
-      await this.userActivationService.recordUserActivation(
-        saveUser,
-        activationCode,
-      );
+    // Record verification codes
+    await this.emailVerificationService.recordEmailVerification(saveUser, emailVerificationCode.toString());
+    await this.phoneVerificationService.recordPhoneVerification(saveUser, phoneVerificationCode.toString());
 
-    //throw exception if recording of activation fails
-    if (!activationRecord) {
-      throw new NotFoundException(`activation record was not found`);
-    }
-
-   
+    // Send verification emails and SMS
+    await this.sendEmailVerification(saveUser, emailVerificationCode.toString());
+    await this.sendPhoneVerification(saveUser, phoneVerificationCode.toString());
 
     const { password, ...result } = saveUser;
-    //emit user registered event
     this.userEventService.emitUserRegistered(saveUser);
 
     return {
       user: result,
-      message: 'Register successful, You can now verify your account',
+      message: 'Registration successful. Please verify your email and phone number to continue.',
     };
   }
 
-  async verifyPhoneNumber(verifyPhoneDto: VerifyPhoneDto) {
-    //Get user account
-    const user = await this.userService.getUserByPhone(
-      verifyPhoneDto.phoneNumber,
-    );
-
-    // Get the latest valid activation code
-    const latestActivation =
-      await this.userActivationService.getLatestValidActivationCode(user!);
-
-    //if there's no activation code throw exception
-    if (!latestActivation) {
-      throw new BadRequestException('No valid activation code found');
+  async verifyEmail(verifyEmailDto: VerifyEmailDto) {
+    const user = await this.userService.findByField('email', verifyEmailDto.email);
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
-    //if different throw exception
-    if (latestActivation.code !== verifyPhoneDto.activationCode) {
-      throw new BadRequestException('The activation code submitted is invalid');
+
+    const latestVerification = await this.emailVerificationService.getLatestValidEmailVerificationCode(user);
+    
+    if (!latestVerification) {
+      throw new BadRequestException('No valid email verification code found');
     }
-    //if same, update user account to phone verified
-    await this.userService.setToUserPhoneVerified(user!);
 
-    //then update useractivation record by updating validated at
-    await this.userActivationService.setValidatedDate(latestActivation);
+    if (latestVerification.code !== verifyEmailDto.verificationCode) {
+      throw new BadRequestException('Invalid email verification code');
+    }
 
-    //emit user phone verified event
-    this.userEventService.emitPhoneVerified(user!, verifyPhoneDto.phoneNumber);
+    // Mark email as verified
+    user.isEmailVerified = true;
+    await this.userService.save(user);
+
+    // Mark verification code as used
+    await this.emailVerificationService.setValidatedDate(latestVerification);
+
+    // Send welcome email
+    await this.emailService.sendWelcomeEmail(user.email, user.firstName);
+
+    //emit email verified event
+    //this.userEventService.emitEmailVerified(user, verifyEmailDto.email);
+
+    return {
+      message: 'Email verified successfully',
+    };
+  }
+
+  async verifyPhone(verifyPhoneDto: VerifyPhoneDto) {
+    const user = await this.userService.getUserByPhone(verifyPhoneDto.phoneNumber);
+    if(!user){
+      throw new NotFoundException('User not found');
+    }
+    
+    const latestVerification = await this.phoneVerificationService.getLatestValidPhoneVerificationCode(user);
+    
+    if (!latestVerification) {
+      throw new BadRequestException('No valid phone verification code found');
+    }
+
+    if (latestVerification.code !== verifyPhoneDto.verificationCode) {
+      throw new BadRequestException('Invalid phone verification code');
+    }
+
+    // Mark phone as verified
+    user.isPhoneVerified = true;
+    await this.userService.save(user);
+
+    // Mark verification code as used
+    await this.phoneVerificationService.setValidatedDate(latestVerification);
+
+    // Send welcome SMS
+    await this.smsService.sendWelcomeMessage(user.phone, user.firstName);
+
+    this.userEventService.emitPhoneVerified(user, verifyPhoneDto.phoneNumber);
 
     return {
       message: 'Phone number verified successfully',
     };
   }
+
+  async resendVerification(resendVerificationDto: ResendVerificationDto) {
+    const user = await this.userService.findByField('email', resendVerificationDto.email);
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (resendVerificationDto.type === VerificationType.EMAIL) {
+      if (user.isEmailVerified) {
+        throw new BadRequestException('Email is already verified');
+      }
+
+      const emailVerificationCode = this.generate6DigitCode();
+      await this.emailVerificationService.recordEmailVerification(user, emailVerificationCode.toString());
+      await this.sendEmailVerification(user, emailVerificationCode.toString());
+
+      return {
+        message: 'Email verification code sent successfully',
+      };
+    } else if (resendVerificationDto.type === VerificationType.PHONE) {
+      if (user.isPhoneVerified) {
+        throw new BadRequestException('Phone number is already verified');
+      }
+
+      const phoneVerificationCode = this.generate6DigitCode();
+      await this.phoneVerificationService.recordPhoneVerification(user, phoneVerificationCode.toString());
+      await this.sendPhoneVerification(user, phoneVerificationCode.toString());
+
+      return {
+        message: 'Phone verification code sent successfully',
+      };
+    }
+
+    throw new BadRequestException('Invalid verification type');
+  }
+
+ 
 
   /*async uploadVerificationDocuments(
     file,
@@ -255,66 +335,9 @@ private mapToUploadedFileResponse(fileEntity: any): UploadedFileResponseDto {
   };
 }
 
-  private generateUserListCacheKey(query: FindUserQueryDto): string {
-    const { page = 1, limit = 10, email } = query;
-    return `user_list_page${page}_limit${limit}_email${email || 'all'}`;
-  }
 
-  async getUnVerifiedUser(
-    query: FindUserQueryDto,
-  ): Promise<PaginatedResponse<Partial<UserEntity>>> {
-    //generate cache key
-    const cacheKey = this.generateUserListCacheKey(query);
-    //add cache key to memory
-    this.userListCacheKeys.add(cacheKey);
 
-    //get data from cache
-    const getCachedData =
-      await this.cacheManager.get<PaginatedResponse<UserEntity>>(cacheKey);
-    if (getCachedData) {
-      console.log(
-        `Cache Hit---------> Returning users list from Cache ${cacheKey}`,
-      );
-      return getCachedData;
-    }
-    console.log(`Cache Miss---------> Returning users list from database`);
-    const { page = 1, limit = 10, email } = query;
-    const skip = (page - 1) * limit;
-
-    //get only unverified users whose role is USER
-    const queryBuilder = this.usersRepository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.role', 'role') // join to access role.code
-      .where('user.isVerified = :isVerified', { isVerified: false })
-      .andWhere('role.code = :roleCode', { roleCode: 'USER' })
-      .orderBy('user.createdAt', 'DESC')
-      .skip(skip)
-      .take(limit);
-
-    if (email) {
-      queryBuilder.andWhere('user.email ILIKE :email', { email: `%${email}%` });
-    }
-
-    const [rawItems, totalItems] = await queryBuilder.getManyAndCount();
-    // Remove password from each user
-    const items = rawItems.map(({ password, ...rest }) => rest);
-
-    const totalPages = Math.ceil(totalItems / limit);
-
-    const responseResult = {
-      items,
-      meta: {
-        currentPage: page,
-        itemsPerPage: limit,
-        totalItems,
-        totalPages,
-        hasPreviousPage: page > 1,
-        hasNextPage: page < totalPages,
-      },
-    };
-    await this.cacheManager.set(cacheKey, responseResult, 30000);
-    return responseResult;
-  }
+ 
 
   async verifyUserAccount(
     idUser: number,
@@ -350,18 +373,18 @@ private mapToUploadedFileResponse(fileEntity: any): UploadedFileResponseDto {
       where: { email: loginDto.email },
       relations: ['role'],
     });
-   
+   console.log(user);
     if (
-      !user ||
-      !(await this.verifyPassword(loginDto.password, user.password))
-    ) {
+      !user)
+     {
       throw new UnauthorizedException(
         'Invalid credentials or account not exists',
       );
     }
-     //if user role is USER, check if phone number is verified
-     if (user.role.code === 'USER' && !user.isPhoneVerified) {
-      throw new UnauthorizedException('Phone number not verified');
+    //check password
+    const isPasswordValid = await this.verifyPassword(loginDto.password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials or account not exists');
     }
 
     //generate
@@ -375,8 +398,8 @@ private mapToUploadedFileResponse(fileEntity: any): UploadedFileResponseDto {
 
   generateToken(user: UserEntity) {
     return {
-      accessToken: this.generateAccessToken(user),
-      refreshToken: this.generateRefreshToken(user),
+      access_token: this.generateAccessToken(user),
+      refresh_token: this.generateRefreshToken(user),
     };
   }
 
@@ -389,7 +412,7 @@ private mapToUploadedFileResponse(fileEntity: any): UploadedFileResponseDto {
     };
     return this.jwtService.sign(payload, {
       secret: 'jwt_secret',
-      expiresIn: '15m',
+      expiresIn: '1440m',//1 day
     });
   }
 
@@ -467,5 +490,22 @@ private mapToUploadedFileResponse(fileEntity: any): UploadedFileResponseDto {
 
   private generate5DigitCode(): number {
     return Math.floor(10000 + Math.random() * 90000);
+  }
+
+  private async sendEmailVerification(user: UserEntity, code: string) {
+    const emailTemplate = this.emailTemplatesService.getEmailVerificationTemplate(user.firstName, code);
+    await this.emailService.sendEmail({
+      to: user.email,
+      subject: 'Email Verification - GoHappyGo',
+      html: emailTemplate
+    });
+  }
+
+  private async sendPhoneVerification(user: UserEntity, code: string) {
+    await this.smsService.sendVerificationCode(user.phone, code);
+  }
+
+  private generate6DigitCode(): number {
+    return Math.floor(100000 + Math.random() * 900000);
   }
 }

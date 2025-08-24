@@ -2,48 +2,58 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/createUser.dto';
+import { CreateUserDto } from './dto/request/createUser.dto';
 import { Roles } from 'src/auth/decorators/role.decorators';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles-guard';
-import { UserRole } from './user.entity';
+import { UserEntity, UserRole } from './user.entity';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorattor';
-import { UpdateUserDto } from './dto/updateUser.dto';
-import { UpdatePhoneDto } from './dto/UpdatePhone.dto';
+import { UpdateUserDto } from './dto/request/updateUser.dto';
+import { UpdatePhoneDto } from './dto/request/UpdatePhone.dto';
 import { ApiTags, ApiBody, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
-import { UserResponseDto } from './dto/user-response.dto';
+import { PaginatedUserResponseDto, UserResponseDto } from './dto/user-response.dto';
 import { UserProfileResponseDto } from './dto/user-profile-response.dto';
+import { FindUsersQueryDto } from 'src/auth/dto/FindUsersQuery.dto';
+import { ToggleActivationDto } from './dto/toggle-activation.dto';
 
 @ApiTags('users')
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) { }
 
-  @Get('/operators')
+
+
+   // Single GET endpoint that handles all filtering scenarios
+
+  @Get('')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN || UserRole.OPERATOR)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Get all operators',
-    description: 'Retrieve all operator accounts. Admin access required.'
+    summary: 'Get all users',
+    description: 'Retrieve all user accounts. Admin can access all users (OPERATOR and USER), operator can only access USERs.'
   })
   @ApiResponse({
     status: 200,
     description: 'Operators fetched successfully',
-    type: [UserResponseDto] // Array of users
+    type: [PaginatedUserResponseDto] // Array of users
   })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
-  getAllOperators() {
-    return this.userService.getAllOperators();
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin or operator access required' })
+  getAllOperators(@Query() query: FindUsersQueryDto,@CurrentUser() user: any) {
+    return this.userService.getAllUsers(query);
   }
 
   
@@ -69,7 +79,7 @@ export class UserController {
     return this.userService.createUser(createUserDto, user);
   }
 
-  @Post('update-staff/:idUser')
+  @Put('update-staff/:idUser')
   @Roles(UserRole.ADMIN)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth('JWT-auth')
@@ -163,4 +173,72 @@ export class UserController {
   updatePhoneNumber(@CurrentUser() user: any, @Body() updatePhoneDto: UpdatePhoneDto) {
     return this.userService.updatePhoneNumber(user, updatePhoneDto);
   }
+
+  @Patch(':id/toggle-activation')
+  @Roles(UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiBody({ type: ToggleActivationDto })
+  @ApiOperation({
+    summary: 'Toggle staff member activation status',
+    description: 'Toggle the activation status of an existing staff member account. Admin access required.'
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Staff member ID to toggle activation status',
+    type: 'number',
+    example: 1
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Staff member activation status toggled successfully',
+    type: UserResponseDto
+  })
+  @ApiResponse({ status: 400, description: 'Bad request - validation failed' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @ApiResponse({ status: 404, description: 'Staff member not found' })
+  async toggleStaffActivation(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() toggleActivationDto: ToggleActivationDto,
+    @CurrentUser() user: UserEntity
+  ): Promise<UserResponseDto> {
+    return await this.userService.toggleStaffActivation(
+      id, 
+      toggleActivationDto.isDeactivated, 
+      user
+    );
+  }
+
+  @Delete('delete-staff/:id')
+  @Roles(UserRole.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Delete staff member',
+    description: 'Delete an existing staff member account. Admin access required.'
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Staff member ID to delete',
+    type: 'number',
+    example: 1
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Staff member deleted successfully',
+    type: UserResponseDto
+  })
+  @ApiResponse({ status: 400, description: 'Bad request - validation failed' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @ApiResponse({ status: 404, description: 'Staff member not found' })
+  deleteStaff(@Param('id', ParseIntPipe) id: number) {
+    return this.userService.deleteStaff(id);
+  }
+
+  
 }
+
+
+

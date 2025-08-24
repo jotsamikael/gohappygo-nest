@@ -86,6 +86,11 @@ export interface ReviewEvent extends BaseUserEvent {
   comment?: string;
 }
 
+export interface EmailVerificationEvent extends BaseUserEvent {
+  email: string;
+  verificationCode?: string;
+}
+
 @Injectable()
 export class UserEventsService {
   constructor(private readonly eventEmitter: EventEmitter2) {}
@@ -144,6 +149,16 @@ export class UserEventsService {
       phoneNumber,
     };
     this.eventEmitter.emit(UserEventType.PHONE_VERIFIED, event);
+  }
+
+  emitEmailVerified(user: UserEntity, email: string): void {
+    const event: EmailVerificationEvent = {
+      userId: user.id,
+      userEmail: user.email,
+      timestamp: new Date(),
+      email,
+    };
+    this.eventEmitter.emit(UserEventType.EMAIL_VERIFIED, event);
   }
 
   emitVerificationDocumentsUploaded(

@@ -23,4 +23,7 @@ export abstract class BaseEntity {
 
   @Column({ name: 'updated_by', nullable: true })
   updatedBy?: number;
+
+  @Column({ name: 'is_deactivated', default: false, type: 'boolean' })
+  isDeactivated: boolean;
 }

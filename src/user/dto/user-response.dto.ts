@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { UserRoleResponseDto } from 'src/role/dto/role-response.dto';
 
 export class UserResponseDto {
   @ApiProperty({ example: 1 })
@@ -22,8 +23,11 @@ export class UserResponseDto {
   @ApiProperty({ example: 'https://example.com/profile.jpg' })
   profilePictureUrl: string;
 
-  @ApiProperty({ example: 1 })
-  roleId: number;
+  @ApiProperty({ type: UserRoleResponseDto })
+  role: UserRoleResponseDto;
+
+  @ApiProperty({ example: false })
+  isDeactivated: boolean;
 
   @ApiProperty({ example: false })
   isPhoneVerified: boolean;
@@ -43,4 +47,22 @@ export class CreateUserResponseDto {
     message: string;
     @ApiProperty({ example: UserResponseDto })
     user: UserResponseDto;
+}
+
+
+export class PaginatedUserResponseDto{
+  @ApiProperty({ type: [UserResponseDto] })
+  data: UserResponseDto[];
+
+  @ApiProperty({ example: 100 })
+  total: number;
+
+  @ApiProperty({ example: 1 })
+  page: number;
+
+  @ApiProperty({ example: 10 })
+  limit: number;
+
+  @ApiProperty({ example: 10 })
+  totalPages: number;
 }

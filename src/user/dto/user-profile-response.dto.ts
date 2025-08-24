@@ -2,21 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { DemandResponseDto } from 'src/demand/dto/demand-response.dto';
 import { MessageResponseDto } from 'src/message/dto/message-response.dto';
 import { RequestResponseDto } from 'src/request/dto/request-reponse.dto';
+import { UserRoleResponseDto } from 'src/role/dto/role-response.dto';
 import { TravelResponseDto } from 'src/travel/dto/travel-response.dto';
 
-export class UserRoleResponseDto {
-  @ApiProperty({ example: 1 })
-  id: number;
 
-  @ApiProperty({ example: 'Administrator' })
-  name: string;
-
-  @ApiProperty({ example: 'ADMIN' })
-  code: string;
-
-  @ApiProperty({ example: 'Administers GoHappyGo platform' })
-  description: string;
-}
 
 export class UploadedFileResponseDto {
   @ApiProperty({ example: 1 })
@@ -58,6 +47,9 @@ export class UserProfileResponseDto {
 
   @ApiProperty({ example: 'https://example.com/profile.jpg' })
   profilePictureUrl: string;
+
+  @ApiProperty({ example: false })
+  isDeactivated: boolean;
 
   @ApiProperty({ example: false })
   isPhoneVerified: boolean;

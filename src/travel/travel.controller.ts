@@ -27,52 +27,50 @@ export class TravelController {
         return await this.travelService.publishTravel(user, createTravelDto)
         }
     
-        //get demands of currently logged-in user
-        @Get('/current-user')
-        @UseGuards(JwtAuthGuard) //must be connected
-        @ApiBearerAuth('JWT-auth') 
-        @ApiOperation({ summary: 'Get travels of current user' })
-        @ApiResponse({ status: 200, description: 'Travels fetched successfully',type: TravelResponseDto })
-        @ApiResponse({ status: 400, description: 'Bad request' })
-        async getTravelOfUserCurrentUser(@CurrentUser() user: any){
-        return await this.travelService.getTravelByUser(user.id)
-        }
     
-       //Admin gets demands by of any user
-        @Get('/by-user/:id')
-        @Roles(UserRole.ADMIN)//sets the required role to acces endpoint
-        @UseGuards(JwtAuthGuard, RolesGuard) //guards the endpoint
-        @ApiBearerAuth('JWT-auth') 
-        @ApiOperation({ summary: 'Get travels of a user' })
-        @ApiResponse({ status: 200, description: 'Travels fetched successfully',type: TravelResponseDto })
-        @ApiResponse({ status: 400, description: 'Bad request' })
-        async getTravelByUser(@Param('id', ParseIntPipe) id: number){
-        return await this.travelService.getTravelByUser(id)
-        }
-    
-       //Admin list all demands
+
+        // Single GET endpoint that handles all filtering scenarios
+
         @Get('')
-        @Roles(UserRole.ADMIN)//sets the required role to acces endpoint
-        @UseGuards(JwtAuthGuard, RolesGuard) //guards the endpoint
+        @UseGuards(JwtAuthGuard) //guards the endpoint
         @ApiBearerAuth('JWT-auth') 
-        @ApiOperation({ summary: 'Get all travels' })
+        @ApiOperation({ summary: 'Get all travels',
+            description: `
+            Retrieve travels with various filter options:
+         - No filters: Returns all travels (admin and operators only)
+         - userId: Returns travels for specific user
+         - flightNumber: Returns travels for specific flight
+         - originAirportId: Returns travels from specific airport
+         - destinationAirportId: Returns travels to specific airport
+         - status: Returns travels with specific status
+         - title: Search travels by title
+         - weightAvailable: Serach by available weight
+         - deliveryDate: Filter by delivery date
+         
+         Supports pagination and sorting.
+            `
+         })
         @ApiResponse({ status: 200, description: 'Travels fetched successfully',type: TravelResponseDto })
         @ApiResponse({ status: 400, description: 'Bad request' })
-        async getAll(@Query() query: FindTravelsQueryDto){
+        @ApiResponse({ status: 401, description: 'Unauthorized' })
+        @ApiResponse({ status: 403, description: 'Forbidden - Admin access required for certain operations' })
+
+        async getAll(@Query() query: FindTravelsQueryDto, @CurrentUser() user: any){
+           // Fix: Check the correct role structure
+         const isAdmin = user.role?.code === UserRole.ADMIN;
+         const isOperator = user.role?.code === UserRole.OPERATOR;
+
+         
+          //Auto-set userId to current user if not admin/operator and no userId specified
+         if (!isAdmin && !isOperator && !query.userId) {
+             query.userId = user.id;
+         }
+         
+           
         return await this.travelService.getAllTravels(query);
         }
 
 
-        
-    @Get('/by-airport/:airportId')
-    @Roles(UserRole.ADMIN)//sets the required role to acces endpoint
-    @UseGuards(JwtAuthGuard, RolesGuard) //guards the endpoint
-    @ApiBearerAuth('JWT-auth') 
-    @ApiOperation({ summary: 'Get travels by airport' })
-    @ApiResponse({ status: 200, description: 'Travels fetched successfully',type: TravelResponseDto })
-    @ApiResponse({ status: 400, description: 'Bad request' })
-    async getTravelsByDepartureAirport(@Param('airportId', ParseIntPipe) airportId: number){
-    return await this.travelService.getTravelsByDepartureAirport(airportId)
-    }
+ 
 
 }

@@ -1,11 +1,13 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { BaseEntity } from 'src/baseEntity/base.entity';
 import { DemandEntity } from 'src/demand/demand.entity';
+import { EmailVerificationEntity } from 'src/email-verification/email-verification.entity';
 import { MessageEntity } from 'src/message/message.entity';
+import { PhoneVerificationEntity } from 'src/phone-verification/phone-verification.entity';
 import { RequestEntity } from 'src/request/request.entity';
 import { UserRoleEntity } from 'src/role/userRole.entity';
 import { TravelEntity } from 'src/travel/travel.entity';
 import { UploadedFileEntity } from 'src/uploaded-file/uploaded-file.entity';
-import { UserActivationEntity } from 'src/user-activation/user-activation.entity';
 import { UserVerificationAuditEntity } from 'src/user-verification-audit-entity/user-verification-audit.entity';
 import {
   Column,
@@ -64,17 +66,23 @@ export class UserEntity extends BaseEntity {
   isPhoneVerified: boolean;
 
   @Column({ default: false })
+  isEmailVerified: boolean;
+
+  @Column({ default: false })
   isVerified: boolean; // Full verification after selfie + ID
 
    @OneToMany(() => MessageEntity, (messages) => messages.sender)
    messagesSend: MessageEntity[];
 
+  @ApiProperty({ description: 'The messagesReceived of the user' })
    @OneToMany(() => MessageEntity, (messages) => messages.receiver)
    messagesReceived: MessageEntity[];
 
+  @OneToMany(() => PhoneVerificationEntity, (phoneVerification) => phoneVerification.user)
+  phoneVerification: PhoneVerificationEntity[];
 
-  @OneToMany(() => UserActivationEntity, (activation) => activation.user)
-  activations: UserActivationEntity[];
+  @OneToMany(() => EmailVerificationEntity, (emailVerification) => emailVerification.user)
+  emailVerification: EmailVerificationEntity[];
 
   @OneToMany(() => UploadedFileEntity, (file) => file.user)
   files: UploadedFileEntity[];

@@ -1,12 +1,12 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { RoleService } from './role.service';
 import { UserRoleEntity } from './userRole.entity';
-import { CreateUserRoleDto } from './dto/createUserRole.dto';
+import { CreateUserRoleDto } from './dto/createRole.dto';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorattor';
 import { UserEntity, UserRole } from 'src/user/user.entity';
 import { PaginatedResponse } from 'src/common/interfaces/paginated-reponse.interfaces';
 import { FindRolesQueryDto } from './dto/FindRolesQuery.dto';
-import { UpdateUserRoleDto } from './dto/updateUserRole.dto';
+import { UpdateUserRoleDto } from './dto/updateRole.dto';
 import { Roles } from 'src/auth/decorators/role.decorators';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles-guard';

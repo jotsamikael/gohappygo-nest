@@ -379,4 +379,41 @@ export class EmailTemplatesService {
       </html>
     `;
   }
+
+  getEmailVerificationTemplate(userName: string, verificationCode: string): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Email Verification - GoHappyGo</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #4CAF50; color: white; padding: 20px; text-align: center; }
+          .content { padding: 20px; background: #f9f9f9; }
+          .verification-code { font-size: 24px; font-weight: bold; text-align: center; padding: 20px; background: #e8f5e8; margin: 20px 0; }
+          .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Email Verification</h1>
+          </div>
+          <div class="content">
+            <h2>Hello ${userName},</h2>
+            <p>Please use the following verification code to verify your email address:</p>
+            <div class="verification-code">${verificationCode}</div>
+            <p>This code will expire in 10 minutes.</p>
+            <p>If you didn't request this verification, please ignore this email.</p>
+          </div>
+          <div class="footer">
+            <p>© 2024 GoHappyGo. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
 } 

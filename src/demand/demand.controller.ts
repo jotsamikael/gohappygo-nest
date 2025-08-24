@@ -27,67 +27,55 @@ export class DemandController {
         return await this.demandService.publishDemand(user, createDemandDto)
     }
 
-    //get demands of currently logged-in user
-    @Get('/current-user')
-    @UseGuards(JwtAuthGuard) //must be connected
-    @ApiBearerAuth('JWT-auth')
-    @ApiOperation({ summary: 'Get demands of current user' })
-    @ApiResponse({ status: 200, description: 'Demands fetched successfully', type: DemandResponseDto })
-    @ApiResponse({ status: 400, description: 'Bad request' })
-    async getDemandOfUserCurrentUser(@CurrentUser() user: any) {
-        return await this.demandService.getDemandByUser(user.id)
-    }
+     // Single GET endpoint that handles all filtering scenarios
+     @Get()
+     @UseGuards(JwtAuthGuard)
+     @ApiBearerAuth('JWT-auth')
+     @ApiOperation({
+         summary: 'Get demands with flexible filtering',
+         description: `
+         Retrieve demands with various filter options:
+         - No filters: Returns all demands (admin and operators only)
+         - userId: Returns demands for specific user
+         - flightNumber: Returns demands for specific flight
+         - originAirportId: Returns demands from specific airport
+         - destinationAirportId: Returns demands to specific airport
+         - status: Returns demands with specific status
+         - title: Search demands by title
+         - deliveryDate: Filter by delivery date
+         
+         Supports pagination and sorting.
+         `
+     })
+     @ApiResponse({ status: 200, description: 'Demands fetched successfully', type: PaginatedDemandsResponseDto })
+     @ApiResponse({ status: 400, description: 'Bad request' })
+     @ApiResponse({ status: 401, description: 'Unauthorized' })
+     @ApiResponse({ status: 403, description: 'Forbidden - Admin access required for certain operations' })
+     async getDemands(
+         @Query() query: FindDemandsQueryDto,
+         @CurrentUser() user: any
+     ) {
+         // Fix: Check the correct role structure
+         const isAdmin = user.role?.code === UserRole.ADMIN;
+         const isOperator = user.role?.code === UserRole.OPERATOR;
 
-    //Admin gets demands by of any user
-    @Get('/by-user/:id')
-    @Roles(UserRole.ADMIN)//sets the required role to acces endpoint
-    @UseGuards(JwtAuthGuard, RolesGuard) //guards the endpoint
-    @ApiBearerAuth('JWT-auth')
-    @ApiOperation({ summary: 'Get demands of a user' })
-    @ApiResponse({ status: 200, description: 'Demands fetched successfully', type: DemandResponseDto })
-    @ApiResponse({ status: 400, description: 'Bad request' })
-    async getDemandByUser(@Param('id', ParseIntPipe) id: number) {
-        return await this.demandService.getDemandByUser(id)
-    }
+         
+          //Auto-set userId to current user if not admin/operator and no userId specified
+         if (!isAdmin && !isOperator && !query.userId) {
+             query.userId = user.id;
+         }
+         
+                
+         return await this.demandService.getDemands(query);
+     }
 
-    //Admin list all demands
-    @Get('')
-    @Roles(UserRole.ADMIN)
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @ApiBearerAuth('JWT-auth')
-    @ApiOperation({
-        summary: 'Get all demands (Admin only)',
-        description: 'Retrieve all demands with pagination and optional filtering. Admin access required.'
-    })
-    @ApiResponse({ status: 200, description: 'Demands fetched successfully', type: PaginatedDemandsResponseDto })
-    @ApiResponse({ status: 400, description: 'Bad request' })
-    @ApiResponse({ status: 401, description: 'Unauthorized' })
-    @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
-    async getAll(@Query() query: FindDemandsQueryDto) {
-        return await this.demandService.getAllDemands(query);
-    }
+   
 
-
-    // gets demands by of flight number user
-    @Get('/by-flight-number/:flight')
-    @UseGuards(JwtAuthGuard) //must be connected
-    @ApiBearerAuth('JWT-auth')
-    @ApiOperation({ summary: 'Get demands by flight number' })
-    @ApiResponse({ status: 200, description: 'Demands fetched successfully', type: DemandResponseDto })
-    @ApiResponse({ status: 400, description: 'Bad request' })
-    async getDemandByFlightNumber(@Param('flight') flight: string) {
-        return await this.demandService.getDemandByFlightNumber(flight)
-    }
+   
 
 
-    @Get('/by-airport/:airportId')
-    @Roles(UserRole.ADMIN)//sets the required role to acces endpoint
-    @UseGuards(JwtAuthGuard, RolesGuard) //guards the endpoint
-    @ApiBearerAuth('JWT-auth')
-    @ApiOperation({ summary: 'Get demands by departure airport' })
-    @ApiResponse({ status: 200, description: 'Demands fetched successfully', type: DemandResponseDto })
-    @ApiResponse({ status: 400, description: 'Bad request' })
-    async getDemandsByAirport(@Param('airportId', ParseIntPipe) airportId: number) {
-        return await this.demandService.getDemandsByDepartureAirport(airportId)
-    }
+   
+
+
+  
 }

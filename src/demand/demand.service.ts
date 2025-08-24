@@ -19,70 +19,124 @@ export class DemandService {
      @Inject(CACHE_MANAGER) private cacheManager: Cache
 ){}
 
- private generateDemandListCacheKey(query: FindDemandsQueryDto): string {
-            const { page = 1, limit = 10, title } = query;
-            return `demands_list_page${page}_limit${limit}_code${title || 'all'}`;
-        }
 
-    async getDemandById(id: number):Promise<DemandEntity| null>{
-      const demand = await this.demandRepository.findOneBy({id})
-      if(!demand){
-        throw new NotFoundException(`demand with ${id} not found`);
+async getDemands(query: FindDemandsQueryDto): Promise<PaginatedResponse<DemandEntity>> {
+  
+  const cacheKey = this.generateDemandListCacheKey(query);
+  this.demandListCacheKeys.add(cacheKey);
+
+  // Check cache first
+  const cachedData = await this.cacheManager.get<PaginatedResponse<DemandEntity>>(cacheKey);
+  if (cachedData) {
+      console.log(`Cache Hit---------> Returning demands list from Cache ${cacheKey}`);
+      return cachedData;
+  }
+
+  console.log(`Cache Miss---------> Returning demands list from database`);
+
+  const { 
+      page = 1, 
+      limit = 10, 
+      title, 
+      flightNumber, 
+      originAirportId, 
+      destinationAirportId, 
+      userId, 
+      status, 
+      deliveryDate, 
+      orderBy = 'createdAt:desc' 
+  } = query;
+
+  const skip = (page - 1) * limit;
+  
+  // First, let's check if there are any demands at all
+  const totalDemandsInDB = await this.demandRepository.count();
+  
+  // Build the query step by step to avoid complex joins that might cause issues
+  const queryBuilder = this.demandRepository.createQueryBuilder('demand')
+      .skip(skip)
+      .take(limit);
+
+  // Apply filters
+  if (title) {
+      queryBuilder.andWhere('LOWER(demand.title) LIKE LOWER(:title)', { title: `%${title}%` });
+  }
+
+  if (flightNumber) {
+      queryBuilder.andWhere('demand.flightNumber = :flightNumber', { flightNumber });
+      console.log('Added flightNumber filter:', flightNumber);
+  }
+
+  if (originAirportId) {
+      queryBuilder.andWhere('demand.originAirportId = :originAirportId', { originAirportId });
+      console.log('Added originAirportId filter:', originAirportId);
+  }
+
+  if (destinationAirportId) {
+      queryBuilder.andWhere('demand.destinationAirportId = :destinationAirportId', { destinationAirportId });
+      console.log('Added destinationAirportId filter:', destinationAirportId);
+  }
+
+  if (userId) {
+      queryBuilder.andWhere('demand.userId = :userId', { userId });
+      console.log('Added userId filter:', userId);
+  }
+
+  if (status) {
+      queryBuilder.andWhere('demand.status = :status', { status });
+      console.log('Added status filter:', status);
+  }
+
+  if (deliveryDate) {
+      queryBuilder.andWhere('DATE(demand.deliveryDate) = DATE(:deliveryDate)', { deliveryDate });
+      console.log('Added deliveryDate filter:', deliveryDate);
+  }
+
+  // Apply sorting
+  const [sortField, sortDirection] = orderBy.split(':');
+  const validSortFields = ['createdAt', 'deliveryDate', 'pricePerKg', 'weight'];
+  const validSortDirections = ['asc', 'desc'];
+  
+  if (validSortFields.includes(sortField) && validSortDirections.includes(sortDirection)) {
+      queryBuilder.orderBy(`demand.${sortField}`, sortDirection.toUpperCase() as 'ASC' | 'DESC');
+      console.log('Added sorting:', `${sortField}:${sortDirection}`);
+  } else {
+      queryBuilder.orderBy('demand.createdAt', 'DESC'); // default
+      console.log('Added default sorting: createdAt:DESC');
+  }
+
+  // Get the count first (without joins to avoid complex queries)
+  const totalItems = await queryBuilder.getCount();
+  
+  // Now add the joins for the actual data
+  queryBuilder
+      .leftJoinAndSelect('demand.user', 'user')
+      .leftJoinAndSelect('demand.originAirport', 'originAirport')
+      .leftJoinAndSelect('demand.destinationAirport', 'destinationAirport');
+
+  const items = await queryBuilder.getMany();
+  
+  const totalPages = Math.ceil(totalItems / limit);
+
+  const responseResult = {
+      items,
+      meta: {
+          currentPage: page,
+          itemsPerPage: limit,
+          totalItems,
+          totalPages,
+          hasPreviousPage: page > 1,
+          hasNextPage: page < totalPages
       }
-      return demand;
-    }
+  };
 
-    async getDemandByFlightNumber(flightNumber: string):Promise<DemandEntity[]| null>{
-       const results = await this.demandRepository.findBy({flightNumber:flightNumber});
-       if(!results){
-          throw new NotFoundException(`No flight with number ${flightNumber} found`)
-       }
-       return results
-    }
+  await this.cacheManager.set(cacheKey, responseResult, 30000);
+  return responseResult;
+}
 
-    async getAllDemands(query: FindDemandsQueryDto):Promise<PaginatedResponse<DemandEntity>>{
-            //generate cache key
-              const cacheKey = this.generateDemandListCacheKey(query);
-              //add cache key to memory
-              this.demandListCacheKeys.add(cacheKey)
-        
-              //get data from cache
-              const getCachedData = await this.cacheManager.get<PaginatedResponse<DemandEntity>>(cacheKey);
-                   if (getCachedData) {
-                    console.log(`Cache Hit---------> Returning demands list from Cache ${cacheKey}`)
-                    return getCachedData
-                }
-                console.log(`Cache Miss---------> Returning roles list from database`)
-                const { page = 1, limit = 10, title } = query;
-                const skip = (page - 1) * limit;
-                const queryBuilder = this.demandRepository.createQueryBuilder('demand')
-                .orderBy('demand.created_at', 'DESC').skip(skip).take(limit)
-        
-                if (title) {
-                    queryBuilder.andWhere('demand.code ILIKE :title', { title: `%${title}%` })
-                }
-        
-                const [items, totalItems] = await queryBuilder.getManyAndCount();
-        
-                const totalPages = Math.ceil(totalItems / limit);
-        
-                const responseResult = {
-                    items,
-                    meta: {
-                        currentPage: page,
-                        itemsPerPage: limit,
-                        totalItems,
-                        totalPages,
-                        hasPreviousPage: page > 1,
-                        hasNextPage: page < totalPages
-                    }
-                }
-                await this.cacheManager.set(cacheKey, responseResult, 30000);
-                return responseResult;
-        
-    }
+  
 
-    async publishDemand(user:UserEntity, createDemandDto:CreateDemandDto):Promise<DemandEntity>{
+  async publishDemand(user:UserEntity, createDemandDto:CreateDemandDto):Promise<DemandEntity>{
       //check if user account is verified
       if(!user.isVerified){
         throw new BadRequestException('Your account is not verified')
@@ -108,25 +162,9 @@ export class DemandService {
         user:user
      })
       return await this.demandRepository.save(newDemand);
-    }
+  }
 
-    /*async updateDemand(user:UserEntity,createDemandDto:CreateDemandDto):Promise<DemandEntity>{
-     
-    }*/
-
-
-    async getDemandByUser(id: number):Promise<DemandEntity[]>{
-        const demands = await this.demandRepository.find({
-            where:{userId: id},
-            relations:['user', 'requests']
-        })
-        if(!demands){
-         throw new NotAcceptableException(`User has no demands`)
-        }
-
-        return demands;
-    }
-
+  
 
 async softDeleteDemandByUser(id: number): Promise<DemandEntity> {
   const demand = await this.demandRepository.findOne({
@@ -162,15 +200,6 @@ async softDeleteDemandByUser(id: number): Promise<DemandEntity> {
 }
 
 
-//get demands by airport
-async getDemandsByDepartureAirport(airportId: number): Promise<DemandEntity[]> {
-  return this.demandRepository.find({
-    where: { originAirportId: airportId },
-    relations: ['user']
-  });
-}
-
-
 findOne(arg0: { where: { id: number }; }): Promise<DemandEntity | null> {
   return this.demandRepository.findOne({
     where: arg0.where
@@ -179,6 +208,23 @@ findOne(arg0: { where: { id: number }; }): Promise<DemandEntity | null> {
 
 save(demand: DemandEntity): Promise<DemandEntity> {
   return this.demandRepository.save(demand);
+}
+
+private generateDemandListCacheKey(query: FindDemandsQueryDto): string {
+  const { 
+      page = 1, 
+      limit = 10, 
+      title, 
+      flightNumber, 
+      originAirportId, 
+      destinationAirportId, 
+      userId, 
+      status, 
+      deliveryDate, 
+      orderBy = 'createdAt:desc' 
+  } = query;
+  
+  return `demands_list_page${page}_limit${limit}_title${title || 'all'}_flight${flightNumber || 'all'}_origin${originAirportId || 'all'}_dest${destinationAirportId || 'all'}_user${userId || 'all'}_status${status || 'all'}_date${deliveryDate || 'all'}_order${orderBy}`;
 }
 }
 

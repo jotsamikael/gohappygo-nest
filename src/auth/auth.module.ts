@@ -10,15 +10,17 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { RolesGuard } from './guards/roles-guard';
 import { EventsModule } from 'src/events/events.module';
 import { UserService } from 'src/user/user.service';
-import { UserActivationService } from 'src/user-activation/user-activation.service';
 import { RoleService } from 'src/role/role.service';
 import { FileUploadService } from 'src/file-upload/file-upload.service';
 import { UserVerificationAuditService } from 'src/user-verification-audit-entity/user-verification-audit.service';
 import { UserModule } from 'src/user/user.module';
-import { UserActivationModule } from 'src/user-activation/user-activation.module';
 import { RoleModule } from 'src/role/role.module';
 import { FileUploadModule } from 'src/file-upload/file-upload.module';
 import { UserVerificationAuditModule } from 'src/user-verification-audit-entity/user-verification-audit.module';
+import { EmailVerificationModule } from 'src/email-verification/email-verification.module';
+import { PhoneVerificationModule } from 'src/phone-verification/phone-verification.module';
+import { EmailModule } from 'src/email/email.module';
+import { SmsModule } from 'src/sms/sms.module';
 
 @Module({
   imports:[
@@ -34,10 +36,13 @@ import { UserVerificationAuditModule } from 'src/user-verification-audit-entity/
     //configure jwt
     JwtModule.register({}),
     UserModule,
-    UserActivationModule,
+    EmailVerificationModule,
+    PhoneVerificationModule,
     RoleModule,
     FileUploadModule,
-    UserVerificationAuditModule
+    UserVerificationAuditModule,
+    SmsModule,
+EmailModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, RolesGuard], //jwt strategy, roles guard

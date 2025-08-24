@@ -42,8 +42,16 @@ export class LoginResponseDto {
   user: UserResponseDto;
 }
 
+export class VerifyEmailResponseDto{
+  @ApiProperty({ example: 'Email verified successfully' })
+  message: string;
+
+  @ApiProperty()
+  user: UserResponseDto;
+}
+
 export class VerifyPhoneResponseDto {
-  @ApiProperty({ example: 'Phone number verified successfully' })
+  @ApiProperty({ example: 'Email verified successfully' })
   message: string;
 
   @ApiProperty()
