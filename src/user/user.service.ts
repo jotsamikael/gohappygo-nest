@@ -652,7 +652,7 @@ private mapToUserResponseDto(user: UserEntity): UserResponseDto {
    */
   private async seedOperatorUser(): Promise<void> {
     const operatorEmail = process.env.OPERATOR_EMAIL || 'operator@gohappygo.com';
-    const operatorPassword = process.env.OPERATOR_PASSWORD || 'operator123456';
+    const operatorPassword = process.env.OPERATOR_PASSWORD || 'password123';
     const operatorPhone = process.env.OPERATOR_PHONE || '+1234567891';
 
     try {

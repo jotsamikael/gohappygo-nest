@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { CreateAirportDto } from './dto/create-airport.dto';
 import { UpdateAirportDto } from './dto/update-airport.dto';
 import { AirportEntity } from './entities/airport.entity';
@@ -6,24 +6,161 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
-
+import { FindAirportsQueryDto } from './dto/find-airports-query.dto';
+import { PaginatedResponse } from 'src/common/interfaces/paginated-reponse.interfaces';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class AirportService implements OnModuleInit {
 
+  private airportListCacheKeys: Set<string> = new Set();
+
   async onModuleInit() {
-    await this.seedAirportData();
+    //await this.seedAirportData();
   }
 
   constructor(
     @InjectRepository(AirportEntity)
-    private readonly airportRepository: Repository<AirportEntity>){}
+    private readonly airportRepository: Repository<AirportEntity>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
+  ){}
+
+
+   async getAllAirports(query: FindAirportsQueryDto): Promise<PaginatedResponse<AirportEntity>> {
+      const cacheKey = this.generateAirportListCacheKey(query);
+      this.airportListCacheKeys.add(cacheKey);
+
+      // Check cache first
+      const cachedData = await this.cacheManager.get<PaginatedResponse<AirportEntity>>(cacheKey);
+      if (cachedData) {
+          console.log(`Cache Hit---------> Returning airports list from Cache ${cacheKey}`);
+          return cachedData;
+      }
+
+      console.log(`Cache Miss---------> Fetching airports from Database ${cacheKey}`);
+
+      const { page = 1, limit = 10, name, municipality, isoCountry, iataCode, icaoCode, continent, isoRegion, type, scheduledService, orderBy = 'name:asc' } = query;
+      const skip = (page - 1) * limit;
+
+      // Build query
+      const queryBuilder = this.airportRepository.createQueryBuilder('airport');
+
+      // Apply filters - Use LIKE instead of ILIKE for MySQL
+      if (name) {
+          queryBuilder.andWhere('LOWER(airport.name) LIKE LOWER(:name)', { name: `%${name}%` });
+      }
+
+      if (municipality) {
+          queryBuilder.andWhere('LOWER(airport.municipality) LIKE LOWER(:municipality)', { municipality: `%${municipality}%` });
+      }
+
+      if (isoCountry) {
+          queryBuilder.andWhere('LOWER(airport.isoCountry) LIKE LOWER(:isoCountry)', { isoCountry: `%${isoCountry}%` });
+      }
+
+      if (iataCode) {
+          queryBuilder.andWhere('LOWER(airport.iataCode) LIKE LOWER(:iataCode)', { iataCode: `%${iataCode}%` });
+      }
+
+      if (icaoCode) {
+          queryBuilder.andWhere('LOWER(airport.icaoCode) LIKE LOWER(:icaoCode)', { icaoCode: `%${icaoCode}%` });
+      }
+
+      if (continent) {
+          queryBuilder.andWhere('LOWER(airport.continent) LIKE LOWER(:continent)', { continent: `%${continent}%` });
+      }
+
+      if (isoRegion) {
+          queryBuilder.andWhere('LOWER(airport.isoRegion) LIKE LOWER(:isoRegion)', { isoRegion: `%${isoRegion}%` });
+      }
+
+      if (type) {
+          queryBuilder.andWhere('LOWER(airport.type) LIKE LOWER(:type)', { type: `%${type}%` });
+      }
+
+      // Add scheduled service filter
+      if (scheduledService) {
+          queryBuilder.andWhere('airport.scheduledService = :scheduledService', { scheduledService: scheduledService });
+      }
+
+      // Add viewport filtering
+      if (query.latitudeMin !== undefined && query.latitudeMax !== undefined) {
+        queryBuilder.andWhere('airport.latitudeDeg BETWEEN :latMin AND :latMax', {
+          latMin: query.latitudeMin,
+          latMax: query.latitudeMax
+        });
+      }
+      
+      if (query.longitudeMin !== undefined && query.longitudeMax !== undefined) {
+        queryBuilder.andWhere('airport.longitudeDeg BETWEEN :lngMin AND :lngMax', {
+          lngMin: query.longitudeMin,
+          lngMax: query.longitudeMax
+        });
+      }
+
+      // Apply sorting
+      if (orderBy) {
+          const [sortField, sortOrder] = orderBy.split(':');
+          const validSortFields = ['name', 'municipality', 'isoCountry', 'iataCode', 'icaoCode', 'continent', 'createdAt'];
+          const validSortOrders = ['asc', 'desc'];
+
+          if (validSortFields.includes(sortField) && validSortOrders.includes(sortOrder)) {
+              queryBuilder.orderBy(`airport.${sortField}`, sortOrder.toUpperCase() as 'ASC' | 'DESC');
+          } else {
+              // Default sorting
+              queryBuilder.orderBy('airport.name', 'ASC');
+          }
+      } else {
+          queryBuilder.orderBy('airport.name', 'ASC');
+      }
+
+      // Get total count
+      const totalItems = await queryBuilder.getCount();
+
+      // Apply pagination
+      queryBuilder.skip(skip).take(limit);
+
+      // Execute query
+      const items = await queryBuilder.getMany();
+
+      // Calculate pagination metadata
+      const totalPages = Math.ceil(totalItems / limit);
+      const hasNextPage = page < totalPages;
+      const hasPreviousPage = page > 1;
+
+      const result: PaginatedResponse<AirportEntity> = {
+          items,
+          meta: {
+              currentPage: page,
+              itemsPerPage: limit,
+              totalItems,
+              totalPages,
+              hasNextPage, 
+              hasPreviousPage
+          }
+      };
+
+      // Cache the result
+      await this.cacheManager.set(cacheKey, result, 300000); // Cache for 5 minutes
+
+      console.log(`✅ Fetched ${items.length} airports (page ${page}/${totalPages})`);
+      return result;
+   }
+
+
+  generateAirportListCacheKey(query: FindAirportsQueryDto) : string{
+   const { page = 1, limit = 10, name, municipality, isoCountry, iataCode, icaoCode, continent, isoRegion, type, scheduledService, orderBy } = query;
+   return `airports:${page}:${limit}:${name}:${municipality}:${isoCountry}:${iataCode}:${icaoCode}:${continent}:${isoRegion}:${type}:${scheduledService}:${orderBy}`;
+  }
+
 
   //create airport
-  create(createAirportDto: CreateAirportDto) {
+  async create(createAirportDto: CreateAirportDto) {
     const airport = this.airportRepository.create(createAirportDto)
-    return this.airportRepository.save(airport)
+    const savedAirport = await this.airportRepository.save(airport)
+    await this.clearAirportListCache(); // Clear cache after creating a new airport
+    return savedAirport
   }
 
   findAll() {
@@ -42,90 +179,17 @@ export class AirportService implements OnModuleInit {
     return this.airportRepository.delete(id)
   }
 
-  /**
-   * Get all active airports
-   */
-  async getAllActiveAirports(): Promise<AirportEntity[]> {
-    return this.airportRepository.find({
-      where: { isActive: true },
-      order: { airportName: 'ASC' }
-    });
-  }
 
-  /**
-   * Get airports by region
-   */
-  async getAirportsByRegion(region: string): Promise<AirportEntity[]> {
-    return this.airportRepository.find({
-      where: { region, isActive: true },
-      order: { airportName: 'ASC' }
-    });
-  }
 
-  /**
-   * Get airports by country
-   */
-  async getAirportsByCountry(country: string): Promise<AirportEntity[]> {
-    return this.airportRepository.find({
-      where: { country, isActive: true },
-      order: { airportName: 'ASC' }
-    });
-  }
 
-  /**
-   * Find airport by IATA code
-   */
-  async findAirportByIataCode(iataCode: string): Promise<AirportEntity | null> {
-    return this.airportRepository.findOne({
-      where: { iataCode: iataCode.toUpperCase(), isActive: true }
-    });
-  }
-
-  /**
-   * Search airports by name or city
-   */
-  async searchAirports(searchTerm: string): Promise<AirportEntity[]> {
-    return this.airportRepository
-      .createQueryBuilder('airport')
-      .where('airport.isActive = :isActive', { isActive: true })
-      .andWhere(
-        '(airport.airportName ILIKE :searchTerm OR airport.city ILIKE :searchTerm OR airport.iataCode ILIKE :searchTerm)',
-        { searchTerm: `%${searchTerm}%` }
-      )
-      .orderBy('airport.airportName', 'ASC')
-      .getMany();
-  }
-
-  /**
-   * Get all unique regions
-   */
-  async getAllRegions(): Promise<string[]> {
-    const airports = await this.airportRepository.find({
-      select: ['region'],
-      where: { isActive: true }
-    });
-    
-    return [...new Set(airports.map(airport => airport.region))].sort();
-  }
-
-  /**
-   * Get all unique countries
-   */
-  async getAllCountries(): Promise<string[]> {
-    const airports = await this.airportRepository.find({
-      select: ['country'],
-      where: { isActive: true }
-    });
-    
-    return [...new Set(airports.map(airport => airport.country))].sort();
-  }
-
+  
+  
  
 
   /**
    * Seeds airport data from the JSON file when the application starts
    * This ensures all airports are available for travel and demand creation
-   */
+   
   private async seedAirportData(): Promise<void> {
     try {
       // Check if airports already exist
@@ -144,16 +208,27 @@ export class AirportService implements OnModuleInit {
 
       console.log(`📊Found ${airports.length} airports in JSON file`);
 
-      // Transform the data to match the entity structure
+      // Transform the data to match the new entity structure
       const airportEntities = airports.map((airport: any) => {
         return this.airportRepository.create({
-          airportName: airport.airportname,
-          city: airport.location,
-          country: airport.country,
-          state: airport.state || null,
+          ident: airport.ident,
+          type: airport.type,
+          name: airport.name,
+          latitudeDeg: airport.latitude_deg ? parseFloat(airport.latitude_deg) : null,
+          longitudeDeg: airport.longitude_deg ? parseFloat(airport.longitude_deg) : null,
+          elevationFt: airport.elevation_ft ? parseInt(airport.elevation_ft) : null,
+          continent: airport.continent,
+          isoCountry: airport.iso_country,
+          isoRegion: airport.iso_region,
+          municipality: airport.municipality,
+          scheduledService: airport.scheduled_service,
+          icaoCode: airport.icao_code,
           iataCode: airport.iata_code,
-          region: airport.region,
-          isActive: true
+          gpsCode: airport.gps_code,
+          localCode: airport.local_code,
+          homeLink: airport.home_link,
+          wikipediaLink: airport.wikipedia_link,
+          keywords: airport.keywords
         });
       });
 
@@ -170,9 +245,9 @@ export class AirportService implements OnModuleInit {
 
       console.log(`🟢 Successfully seeded ${savedCount} airports`);
       
-      // Get unique regions for display
-      const uniqueRegions = [...new Set(airports.map((a: any) => a.region))];
-      console.log(` Regions available: ${uniqueRegions.slice(0, 5).join(', ')}${uniqueRegions.length > 5 ? ` and ${uniqueRegions.length - 5} more...` : ''}`);
+      // Get unique continents for display
+      const uniqueContinents = [...new Set(airports.map((a: any) => a.continent))];
+      console.log(` Continents available: ${uniqueContinents.slice(0, 5).join(', ')}${uniqueContinents.length > 5 ? ` and ${uniqueContinents.length - 5} more...` : ''}`);
 
     } catch (error) {
       console.error(`🔴 Failed to seed airport data:`, error.message);
@@ -189,5 +264,13 @@ export class AirportService implements OnModuleInit {
       // Log the full error for debugging
       console.error(`🔍 Full error:`, error);
     }
+  }*/
+
+  async clearAirportListCache(): Promise<void> {
+    for (const cacheKey of this.airportListCacheKeys) {
+      await this.cacheManager.del(cacheKey);
+    }
+    this.airportListCacheKeys.clear();
+    console.log('🗑️ Cleared airport list cache');
   }
 }

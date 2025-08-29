@@ -13,7 +13,7 @@ import { PaginatedAirlinesResponseDto } from './dto/airline-response.dto';
 import { PaginatedResponse } from 'src/common/interfaces/paginated-reponse.interfaces';
 import { AirlineEntity } from './entities/airline.entity';
 
-@ApiTags('Airlines')
+@ApiTags('airlines')
 @Controller('airline')
 export class AirlineController {
   constructor(private readonly airlineService: AirlineService) {}

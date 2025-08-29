@@ -33,6 +33,7 @@ async function bootstrap() {
       'http://localhost:3000', // Backend server
       'http://127.0.0.1:4200', // Alternative localhost
       'http://127.0.0.1:3000', // Alternative backend
+      'https://gohappygo-back-office.vercel.app' //online back-office
       // Add your production domain here when deploying
       // 'https://yourdomain.com',
     ],
@@ -77,6 +78,7 @@ async function bootstrap() {
     .addServer('https://your-production-domain.com', 'Production server') // Add production server
     .addTag('auth', 'Authentication endpoints')
     .addTag('airlines', 'Airline management endpoints')
+    .addTag('airports', 'Airport management endpoints')
     .addTag('users', 'User management endpoints')
     .addTag('demands', 'Delivery demand endpoints')
     .addTag('demandsAndTravels', 'Demands and travels search endpoints')

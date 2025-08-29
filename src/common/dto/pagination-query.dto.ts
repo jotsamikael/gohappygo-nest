@@ -21,7 +21,7 @@ export class PaginationQueryDto{
         description: 'Number of items per page',
         example: 10,
         minimum: 1,
-        maximum: 100,
+        maximum: 2000,
         required: false,
         default: 10
     })
@@ -29,7 +29,7 @@ export class PaginationQueryDto{
     @Type(()=> Number)
     @IsInt({message: 'Limit must be an integer'})
     @Min(1,{message: 'Limit must be an integer'})
-    @Max(100,{message: 'Limit must be an integer'})
+    @Max(2000,{message: 'Limit must be an integer'})
     limit?: number = 10
 
 }
