@@ -6,7 +6,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { MessageEntity } from './message/message.entity';
 import { RequestEntity } from './request/request.entity';
-import { ReviewEntity } from './review/review.entity';
 import { TransactionEntity } from './transaction/transaction.entity';
 import { TravelEntity } from './travel/travel.entity';
 import { UserEntity } from './user/user.entity';
@@ -101,7 +100,7 @@ async function bootstrap() {
     .build();
   
   const document = SwaggerModule.createDocument(app, config,{
-    extraModels: [UserEntity, AirlineEntity, TravelEntity, RequestEntity, ReviewEntity, MessageEntity, TransactionEntity], //add entities to swagger
+    extraModels: [UserEntity, AirlineEntity, TravelEntity, RequestEntity,  MessageEntity, TransactionEntity], //add entities to swagger
   });
   
   SwaggerModule.setup('api', app, document, {
