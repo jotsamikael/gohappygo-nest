@@ -10,6 +10,7 @@ import { TransactionEntity } from './transaction/transaction.entity';
 import { TravelEntity } from './travel/travel.entity';
 import { UserEntity } from './user/user.entity';
 import { AirlineEntity } from './airline/entities/airline.entity';
+import { ReviewEntity } from './review/review.entity';
 
 //root file ->entry point of nest js application
 
@@ -100,7 +101,7 @@ async function bootstrap() {
     .build();
   
   const document = SwaggerModule.createDocument(app, config,{
-    extraModels: [UserEntity, AirlineEntity, TravelEntity, RequestEntity,  MessageEntity, TransactionEntity], //add entities to swagger
+    extraModels: [UserEntity, AirlineEntity, TravelEntity, RequestEntity, ReviewEntity, MessageEntity, TransactionEntity], //add entities to swagger
   });
   
   SwaggerModule.setup('api', app, document, {
